@@ -82,7 +82,9 @@ public class Consumers {
                 return;
             }
 
-            consumerHandler.onRecharge(msisdn);
+            if (rechargeNoti.getEntryLevelOffer().matches("34110|34111")) { //TODO Change
+                consumerHandler.onRecharge(msisdn);
+            }
 
         } catch (Exception e) {
             logger.error("JSON parsing failed", e);

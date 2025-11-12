@@ -23,9 +23,11 @@ public class ConsumerHandler {
 
     public void gotActive(String msisdn) {
         FetchServiceDetailsResponse servideDetails = APIUtil.fetchServiceDetails(msisdn, debugMode);
+        String accountName = servideDetails.getAccountName();
     }
 
     public void onRecharge(String msisdn) {
-
+        FetchServiceDetailsResponse servideDetails = APIUtil.fetchServiceDetails(msisdn, debugMode);
+        String accountName = servideDetails.getAccountName();
     }
 }
