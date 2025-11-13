@@ -2,6 +2,7 @@ package mn.unitel.campaign;
 
 import DTO.DTO_response.FetchServiceDetailsResponse;
 import Executable.APIUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import mn.unitel.campaign.jooq.tables.records.SpecialPrizeRuleRecord;
@@ -35,51 +36,66 @@ public class ConsumerHandler {
     @ConfigProperty(name = "campaign.debug.mode", defaultValue = "false")
     boolean debugMode;
 
+
     public void gotActive(String msisdn) {
-        if (!helper.isTokiNumber(msisdn)){
+        if (!helper.isTokiNumber(msisdn)) {
             logger.infof("Number %s is not a Toki number. Skipping.", msisdn);
             return;
         }
 
         FetchServiceDetailsResponse servideDetails = APIUtil.fetchServiceDetails(msisdn, debugMode);
         String accountName = servideDetails.getAccountName();
+
+        String nationalId = getNationalIdByPhoneNo(msisdn, accountName);
+
+        if (nationalId.equals("NOT_FOUND")) {
+            logger.infof("National ID not found for number %s. Skipping spin grant.", msisdn);
+            return;
+        }
+
+        grantSpin(msisdn, accountName, nationalId, "New Number");
     }
 
     public void onRecharge(String msisdn) {
-        if (!helper.isTokiNumber(msisdn)){
+        if (!helper.isTokiNumber(msisdn)) {
             logger.infof("Number %s is not a Toki number. Skipping.", msisdn);
             return;
         }
 
         FetchServiceDetailsResponse servideDetails = APIUtil.fetchServiceDetails(msisdn, debugMode);
         String accountName = servideDetails.getAccountName();
+
+        String nationalId = getNationalIdByPhoneNo(msisdn, accountName);
+
+        if (nationalId.equals("NOT_FOUND")) {
+            logger.infof("National ID not found for number %s. Skipping spin grant.", msisdn);
+            return;
+        }
+
+        grantSpin(msisdn, accountName, nationalId, "Recharge");
     }
 
-    public void grantSpin(String msisdn, String accountName, String rechargeType) {
+    public void grantSpin(String msisdn, String accountName, String nationalId, String rechargeType) {
         dsl.insertInto(SPIN_ELIGIBLE_NUMBERS)
+                .set(SPIN_ELIGIBLE_NUMBERS.NATIONAL_ID, nationalId)
                 .set(SPIN_ELIGIBLE_NUMBERS.PHONE_NO, msisdn)
                 .set(SPIN_ELIGIBLE_NUMBERS.ACCOUNT_NAME, accountName)
                 .set(SPIN_ELIGIBLE_NUMBERS.RECHARGE_TYPE, rechargeType)
                 .set(SPIN_ELIGIBLE_NUMBERS.RECHARGE_DATE, LocalDateTime.now())
                 .execute();
 
-        smsService.send("4477", msisdn, "", true);
+        smsService.send("4477", msisdn, "", true); // TODO sms text
     }
 
-    public void spin(String msisdn) {
-        List<SpecialPrizeRuleRecord> records = dsl.selectFrom(SPECIAL_PRIZE_RULE)
-                .where(SPECIAL_PRIZE_RULE.CLAIMED.eq(false))
-                .and(SPECIAL_PRIZE_RULE.MATCH_DATE.eq(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))))
-                .and(SPECIAL_PRIZE_RULE.MATCH_TIME.lessThan(LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))))
-                .orderBy(SPECIAL_PRIZE_RULE.MATCH_TIME.asc())
-                .fetch();
-
-        if (!records.isEmpty()) {
-            logger.info("Available prizes for " + msisdn + ":");
-            logger.info(records.toString());
+    public String getNationalIdByPhoneNo(String phoneNo, String accountName) {
+        String rd;
+        try {
+            JsonNode rdInfo = Utils.toJsonNode(APIUtil.getRegIDByPhoneNo(phoneNo, accountName, debugMode));
+            rd = rdInfo.path("rd").asText();
+        } catch (Exception e) {
+            return "NOT_FOUND";
         }
 
-
-
+        return rd;
     }
 }
