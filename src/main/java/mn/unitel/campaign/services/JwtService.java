@@ -1,69 +1,98 @@
 package mn.unitel.campaign.services;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
 import java.util.Map;
 
 @ApplicationScoped
 public class JwtService {
+    private static final Logger logger = Logger.getLogger(JwtService.class);
+
     @ConfigProperty(name = "jwt.key")
     String SECRET_KEY;
+
+    private Key hmacKey;
+
+    @PostConstruct
+    void init() {
+        byte[] keyBytes = SECRET_KEY.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            logger.warn("jwt.key appears shorter than 32 bytes. Consider a longer random value for HS256.");
+        }
+        hmacKey = Keys.hmacShaKeyFor(keyBytes);
+    }
 
     public String generateTokenWithPhone(String subject, String phoneNo, String tokiId, String nationalId) {
         Map<String, Object> claims = Map.of(
                 "phoneNo", phoneNo,
                 "tokiId", tokiId,
-                "nationalId", nationalId);
-
+                "nationalId", nationalId
+        );
         return generateToken(subject, claims);
     }
 
     private String generateToken(String subject, Map<String, Object> claims) {
         long nowMillis = System.currentTimeMillis();
+        long expMillis = nowMillis + 15 * 60 * 1000; // 15 min
 
-        long expMillis = nowMillis + 15 * 60 * 1000; // 10 min
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(nowMillis))
                 .setExpiration(new Date(expMillis))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY.getBytes())
+                .signWith(hmacKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public boolean isExpiredOrInvalid(String token) {
         try {
-            Date exp = Jwts.parser()
-                    .setSigningKey(SECRET_KEY.getBytes())
+            Date exp = Jwts.parserBuilder()
+                    .setSigningKey(hmacKey)
+                    .build()
                     .parseClaimsJws(token)
                     .getBody()
                     .getExpiration();
             return exp.before(new Date());
-        } catch (Exception e) {
+        } catch (JwtException e) {
             return true;
         }
-
-
     }
 
     public String extractSubject(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(SECRET_KEY.getBytes())
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.getSubject();
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(hmacKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claims.getSubject();
+        } catch (JwtException e) {
+            return null;
+        }
     }
 
     public String getStringClaim(String token, String key) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(SECRET_KEY.getBytes())
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.get(key, String.class);
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(hmacKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claims.get(key, String.class);
+        } catch (JwtException e) {
+            return null;
+        }
     }
 }
