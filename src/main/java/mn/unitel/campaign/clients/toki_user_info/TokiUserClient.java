@@ -7,20 +7,25 @@ import mn.unitel.campaign.filters.OutgoingResponseLoggingFilter;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-@Path("/")
+@Path("/v1/api")
 @RegisterRestClient(configKey = "toki.user.info")
 @RegisterProvider(OutgoingRequestLoggingFilter.class)
 @RegisterProvider(OutgoingResponseLoggingFilter.class)
 public interface TokiUserClient {
     @POST
-    @Path("/v1/api/payment/authenticate")
+    @Path("/payment/authenticate")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     TokiUserAuthRes getAuthUser(TokiUserAuthReq req);
 
+    @POST
+    @Path("/payment/info/user")
+    @Produces(MediaType.APPLICATION_JSON)
+    TokiUserInfoRes getUserData(@HeaderParam("Authorization") String authorization, TokiUserInfoReq tokiUserInfoReq);
+
     @GET
-    @Path("/v1/api/payment/nationalId/{nationalId}")
-    TokiUserInfoRes getInfoByNationalId(
+    @Path("/payment/nationalId/{nationalId}")
+    TokiUsersByNationalIdRes getInfoByNationalId(
             @HeaderParam("Authorization") String authorization,
             @PathParam("nationalId") String nationalId
     );

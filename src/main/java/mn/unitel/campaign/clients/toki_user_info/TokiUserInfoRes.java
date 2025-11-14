@@ -1,14 +1,12 @@
 package mn.unitel.campaign.clients.toki_user_info;
 
+import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.List;
 
 @Data
-@Getter
-@Setter
+@Builder
 public class TokiUserInfoRes {
-    private List<Customer> customers;
+    private KycData data;
+    private String message;
+    private int status;
 }

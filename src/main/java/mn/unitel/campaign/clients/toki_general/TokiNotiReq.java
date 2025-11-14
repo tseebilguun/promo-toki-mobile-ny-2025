@@ -1,4 +1,4 @@
-package mn.unitel.campaign.clients.toki_noti;
+package mn.unitel.campaign.clients.toki_general;
 
 import lombok.Builder;
 import lombok.Data;

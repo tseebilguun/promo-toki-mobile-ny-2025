@@ -1,8 +1,9 @@
 package mn.unitel.campaign.services;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import mn.unitel.campaign.clients.toki_noti.TokiNotiClient;
-import mn.unitel.campaign.clients.toki_noti.TokiNotiReq;
+import mn.unitel.campaign.clients.toki_general.TokiGeneralClient;
+import mn.unitel.campaign.clients.toki_general.TokiGeneralInfo;
+import mn.unitel.campaign.clients.toki_general.TokiNotiReq;
 import mn.unitel.campaign.clients.toki_user_info.*;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -13,7 +14,7 @@ public class TokiService {
     Logger logger = Logger.getLogger(TokiService.class);
 
     @RestClient
-    TokiNotiClient tokiNotiClient;
+    TokiGeneralClient tokiGeneralClient;
 
     @RestClient
     TokiUserClient tokiUserClient;
@@ -24,8 +25,8 @@ public class TokiService {
     @ConfigProperty(name = "toki.user.auth.password")
     String tokiUserAuthPassword;
 
-    public String getTokiId(String rd) {
-        if (rd == null || rd.isBlank()) {
+    public String getTokiId(String nationalId) {
+        if (nationalId == null || nationalId.isBlank()) {
             logger.warn("getTokiId() called with empty or null national ID");
             return "NOT_FOUND";
         }
@@ -39,23 +40,23 @@ public class TokiService {
                             .build()
             );
         } catch (Exception e) {
-            logger.errorf("Failed to authenticate with Toki API for national ID %s: %s", rd, e.getMessage());
+            logger.errorf("Failed to authenticate with Toki API for national ID %s: %s", nationalId, e.getMessage());
             return "NOT_FOUND";
         }
 
-        TokiUserInfoRes tokiUserInfo;
+        TokiUsersByNationalIdRes tokiUserInfo;
         try {
             tokiUserInfo = tokiUserClient.getInfoByNationalId(
                     "Bearer " + authRes.getData().getAccessToken(),
-                    rd
+                    nationalId
             );
         } catch (Exception e) {
-            logger.errorf("Failed to fetch user info for national ID %s: %s", rd, e.getMessage());
+            logger.errorf("Failed to fetch user info for national ID %s: %s", nationalId, e.getMessage());
             return "NOT_FOUND";
         }
 
         if (tokiUserInfo == null || tokiUserInfo.getCustomers() == null) {
-            logger.warnf("No customer data found for national ID: %s", rd);
+            logger.warnf("No customer data found for national ID: %s", nationalId);
             return "NOT_FOUND";
         }
 
@@ -63,18 +64,17 @@ public class TokiService {
                 .findFirst()
                 .map(Customer::getAccountId)
                 .orElseGet(() -> {
-                    logger.warnf("Customer list empty for national ID: %s", rd);
+                    logger.warnf("Customer list empty for national ID: %s", nationalId);
                     return "NOT_FOUND";
                 });
     }
 
     public void sendPushNoti(String tokiId, String body) {
         logger.info("Sending toki noti to user: " + tokiId);
-
-        String token = "Bearer " + tokiNotiClient.getToken().getData().getAccessToken();
+        String token = "Bearer " + tokiGeneralClient.getToken().getData().getAccessToken();
 
         try {
-            tokiNotiClient.send(
+            tokiGeneralClient.send(
                     token,
                     TokiNotiReq.builder()
                             .title("Toki Mobile") // TODO Change
@@ -88,5 +88,34 @@ public class TokiService {
         } catch (Exception e) {
             logger.error("Failed to send push noti to Toki ID: " + tokiId + ", " + e.getMessage());
         }
+    }
+
+    public TokiUserInfoRes getTokiUserInfo(String tokiId) throws Exception {
+        TokiUserAuthRes authRes = tokiUserClient.getAuthUser(
+                TokiUserAuthReq.builder()
+                        .username(tokiUserAuthUsername)
+                        .password(tokiUserAuthPassword)
+                        .build()
+        );
+
+        return tokiUserClient.getUserData(
+                authRes.getData().getAccessToken(),
+                TokiUserInfoReq.builder()
+                        .requestId(tokiId)
+                        .accountId(tokiId)
+                        .build()
+        );
+    }
+
+    public String getTokiIdFromToken(String token) throws Exception {
+        token = "Bearer " + token;
+
+        TokiGeneralInfo tokiGeneralInfo = tokiGeneralClient.getUserInfo(token);
+
+        if (tokiGeneralInfo.getData().get_id().isBlank() || tokiGeneralInfo.getData().get_id() == null) {
+            throw new Exception("Toki ID not found in token");
+        }
+
+        return tokiGeneralInfo.getData().get_id();
     }
 }

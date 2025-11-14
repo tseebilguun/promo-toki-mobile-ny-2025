@@ -5,19 +5,13 @@ import Executable.APIUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import mn.unitel.campaign.jooq.tables.records.SpecialPrizeRuleRecord;
 import mn.unitel.campaign.legacy.SmsService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 import org.jooq.DSLContext;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 
-import static mn.unitel.campaign.jooq.Tables.SPECIAL_PRIZE_RULE;
 import static mn.unitel.campaign.jooq.Tables.SPIN_ELIGIBLE_NUMBERS;
 
 @ApplicationScoped

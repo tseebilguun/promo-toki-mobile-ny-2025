@@ -1,4 +1,4 @@
-package mn.unitel.campaign.clients.toki_noti;
+package mn.unitel.campaign.clients.toki_general;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -9,12 +9,12 @@ import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 @Path("/third-party-service/v1")
-@RegisterRestClient(configKey = "toki-noti")
+@RegisterRestClient(configKey = "toki-general")
 @ClientHeaderParam(name = "Accept", value = "*/*")
 @RegisterProvider(OutgoingRequestLoggingFilter.class)
 @RegisterProvider(OutgoingResponseLoggingFilter.class)
 @ClientHeaderParam(name = "Content-Type", value = MediaType.APPLICATION_JSON)
-public interface TokiNotiClient {
+public interface TokiGeneralClient {
     @Path("/notification/single-push")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -28,4 +28,12 @@ public interface TokiNotiClient {
     @ClientHeaderParam(name = "Authorization", value = "Basic T1I5UEFnRXNYcjpSZ2NxNll6QXJTR0YxU081MW82ZWFxekFOOVI2UjlJd3RublNMQjlJ")
     @Produces(MediaType.APPLICATION_JSON)
     TokiNotiGetTokenRes getToken();
+
+    @GET
+    @Path("/shoppy/user")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ClientHeaderParam(name = "api-key", value = "ShdwC5Fn")
+    TokiGeneralInfo getUserInfo(
+            @HeaderParam("Authorization") String authorization
+    );
 }
