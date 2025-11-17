@@ -36,7 +36,7 @@ public class JwtService {
 
     public String generateTokenWithPhone(String subject, String phoneNo, String tokiId, String nationalId) {
         Map<String, Object> claims = Map.of(
-                "phoneNo", phoneNo,
+                "nationalId", phoneNo,
                 "tokiId", tokiId,
                 "nationalId", nationalId
         );

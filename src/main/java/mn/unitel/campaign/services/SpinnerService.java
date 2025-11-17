@@ -2,23 +2,32 @@ package mn.unitel.campaign.services;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import mn.unitel.campaign.CustomResponse;
+import mn.unitel.campaign.Helper;
 import mn.unitel.campaign.jooq.tables.records.PrizeListRecord;
 import mn.unitel.campaign.jooq.tables.records.SpecialPrizeRuleRecord;
 import mn.unitel.campaign.jooq.tables.records.SpinEligibleNumbersRecord;
 import mn.unitel.campaign.models.RemainingSpinRes;
+import mn.unitel.campaign.models.SpinReq;
+import mn.unitel.campaign.models.SpinRes;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static mn.unitel.campaign.jooq.Tables.SPECIAL_PRIZE_RULE;
-import static mn.unitel.campaign.jooq.Tables.SPIN_ELIGIBLE_NUMBERS;
+import static mn.unitel.campaign.jooq.Tables.*;
 
 @ApplicationScoped
 public class SpinnerService {
@@ -27,11 +36,33 @@ public class SpinnerService {
     @Inject
     DSLContext dsl;
 
-    public Response getRemainingSpins(String msisdn) {
+    @Inject
+    Helper helper;
+
+    @ConfigProperty(name = "physical.special.prize.ids")
+    List<Integer> physicalPrizeIds;
+
+    @ConfigProperty(name = "coupon.special.prize.ids")
+    List<Integer> couponPrizeIds;
+
+    @Inject
+    PrizeService prizeService;
+
+    public Response getRemainingSpins(@Context ContainerRequestContext ctx) {
         try {
+            String phoneNo = (String) ctx.getProperty("jwt.phone");
+            String tokiId = (String) ctx.getProperty("jwt.tokiId");
+            String nationalId = (String) ctx.getProperty("jwt.nationalId");
+
+            if (phoneNo == null || tokiId == null || nationalId == null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new CustomResponse<>("fail", "Алдаа гарлаа. Дахин оролдоно уу.", null))
+                        .build();
+            }
+
             List<SpinEligibleNumbersRecord> records = dsl
                     .selectFrom(SPIN_ELIGIBLE_NUMBERS)
-                    .where(SPIN_ELIGIBLE_NUMBERS.PHONE_NO.eq(msisdn))
+                    .where(SPIN_ELIGIBLE_NUMBERS.NATIONAL_ID.eq(nationalId))
                     .and(SPIN_ELIGIBLE_NUMBERS.USED.eq(false))
                     .orderBy(SPIN_ELIGIBLE_NUMBERS.RECHARGE_DATE.asc())
                     .fetch();
@@ -42,11 +73,13 @@ public class SpinnerService {
                 return Response.ok(
                                 new CustomResponse<>(
                                         "success",
-                                        "No remaining spins",
+                                        "Танд хүрд эргүүлэх эрх байхгүй байна.",
                                         RemainingSpinRes.builder()
                                                 .currentDate(LocalDateTime.now())
                                                 .remainingSpins(records.size())
-                                                .phoneNo(msisdn)
+                                                .phoneNo(phoneNo)
+                                                .tokiId(tokiId)
+                                                .nationalId(nationalId)
                                                 .spinId(null)
                                                 .build()
                                 )
@@ -65,7 +98,9 @@ public class SpinnerService {
                                     RemainingSpinRes.builder()
                                             .currentDate(LocalDateTime.now())
                                             .remainingSpins(records.size())
-                                            .phoneNo(msisdn)
+                                            .phoneNo(phoneNo)
+                                            .tokiId(tokiId)
+                                            .nationalId(nationalId)
                                             .spinId(firstRecord.getId())
                                             .build()
                             )
@@ -75,22 +110,218 @@ public class SpinnerService {
         } catch (Exception e) {
             logger.info(e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new CustomResponse<>("fail", "Internal error", null))
+                    .entity(new CustomResponse<>("fail", "Алдаа гарлаа. Дахин оролдоно уу.", null))
                     .build();
         }
     }
 
-    public void spin(String msisdn) {
-        List<SpecialPrizeRuleRecord> records = dsl.selectFrom(SPECIAL_PRIZE_RULE)
-                .where(SPECIAL_PRIZE_RULE.CLAIMED.eq(false))
-                .and(SPECIAL_PRIZE_RULE.MATCH_DATE.eq(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))))
-                .and(SPECIAL_PRIZE_RULE.MATCH_TIME.lessThan(LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))))
-                .orderBy(SPECIAL_PRIZE_RULE.MATCH_TIME.asc())
-                .fetch();
+    public Response spin(SpinReq spinReq, @Context ContainerRequestContext ctx) {
+        String phoneNo = (String) ctx.getProperty("jwt.phone");
+        String tokiId = (String) ctx.getProperty("jwt.tokiId");
+        String nationalId = (String) ctx.getProperty("jwt.nationalId");
 
-        if (!records.isEmpty()) {
-            logger.info("Available prizes for " + msisdn + ":");
-            logger.info(records.toString());
+        if (phoneNo == null || tokiId == null || nationalId == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new CustomResponse<>("fail", "Алдаа гарлаа. Дахин оролдоно уу.", null))
+                    .build();
+        }
+
+        boolean isBlackListed = helper.isBlacklisted(nationalId);
+
+        String formattedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String formattedTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
+
+        AtomicInteger claimedPrizeId = new AtomicInteger();
+        AtomicReference<String> coupon = new AtomicReference<>();
+        AtomicReference<String> rechargedMsisdn = new AtomicReference<>();
+
+        try {
+            dsl.transaction(cfg -> {
+                DSLContext dslTx = DSL.using(cfg);
+
+                SpinEligibleNumbersRecord spinRecord = dslTx.selectFrom(SPIN_ELIGIBLE_NUMBERS)
+                        .where(SPIN_ELIGIBLE_NUMBERS.NATIONAL_ID.eq(nationalId))
+                        .and(SPIN_ELIGIBLE_NUMBERS.USED.eq(false))
+                        .orderBy(SPIN_ELIGIBLE_NUMBERS.RECHARGE_DATE.asc())
+                        .limit(1)
+                        .forUpdate()
+                        .skipLocked()
+                        .fetchOne();
+
+                if (spinRecord == null) {
+                    logger.info("No remaining spins for " + nationalId);
+                    throw new WebApplicationException(
+                            Response.status(Response.Status.BAD_REQUEST)
+                                    .entity(new CustomResponse<>("fail", "Танд хүрд эргүүлэх эрх байхгүй байна.", null))
+                                    .build()
+                    );
+                }
+
+                logger.info("Spin record: " + spinRecord.formatJSON());
+                logger.info("Spin eligible ID from request: " + spinReq.getSpinId());
+                logger.info("Spin eligible ID from record: " + spinRecord.getId());
+
+                if (!spinReq.getSpinId().equals(spinRecord.getId())) {
+                    logger.warn("Exception will be thrown!");
+                    throw new WebApplicationException(
+                            Response.status(Response.Status.BAD_REQUEST)
+                                    .entity(new CustomResponse<>("fail", "Алдаа гарлаа. Дахин оролдоно уу.", null))
+                                    .build()
+                    );
+                }
+
+                int updatedSpinRecord = dslTx.update(SPIN_ELIGIBLE_NUMBERS)
+                        .set(SPIN_ELIGIBLE_NUMBERS.USED, true)
+                        .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinRecord.getId()))
+                        .execute();
+
+                logger.info("Updated Spin record: " + updatedSpinRecord);
+
+                SpecialPrizeRuleRecord specialPrizeRuleRecord;
+
+                rechargedMsisdn.set(spinRecord.getPhoneNo());
+
+                if (!isBlackListed) {
+                    specialPrizeRuleRecord = dslTx.selectFrom(SPECIAL_PRIZE_RULE)
+                            .where(SPECIAL_PRIZE_RULE.CLAIMED.eq(false))
+                            .and(SPECIAL_PRIZE_RULE.MATCH_DATE.eq(formattedDate))
+                            .and(SPECIAL_PRIZE_RULE.MATCH_TIME.lessThan(formattedTime))
+                            .orderBy(SPECIAL_PRIZE_RULE.MATCH_TIME.asc())
+                            .limit(1)
+                            .forUpdate()
+                            .skipLocked()
+                            .fetchOne();
+                } else {
+                    logger.info("Blacklisted national ID: " + nationalId + ", UUID: " + spinReq.getSpinId());
+                    claimedPrizeId.set(0);
+                    return;
+                }
+
+                logger.info("Special prize record: " + (specialPrizeRuleRecord != null ? specialPrizeRuleRecord.formatJSON() : "No prize available"));
+
+                if (specialPrizeRuleRecord == null) {
+                    claimedPrizeId.set(0);
+                    return;
+                }
+
+                if (physicalPrizeIds.contains(specialPrizeRuleRecord.getPrizeId())) {
+                    logger.info("Checking if the user " + nationalId + " has already won a super special prize before.");
+                    SpecialPrizeRuleRecord existingSuperPrize = dslTx.selectFrom(SPECIAL_PRIZE_RULE)
+                            .where(SPECIAL_PRIZE_RULE.CLAIMED.eq(true))
+                            .and(SPECIAL_PRIZE_RULE.PRIZE_ID.in(physicalPrizeIds))
+                            .and(SPECIAL_PRIZE_RULE.CLAIMED_USER_NATIONAL_ID.eq(nationalId))
+                            .limit(1)
+                            .fetchOne();
+
+                    logger.info("Existing super prize record: " + (existingSuperPrize != null ? existingSuperPrize.formatJSON() : "No existing super prize"));
+
+                    if (existingSuperPrize != null) {
+                        logger.info("User " + nationalId + " has already won a super special prize before. Skipping super special prize.");
+                        claimedPrizeId.set(0);
+                        return;
+                    }
+                }
+
+                if (couponPrizeIds.contains(specialPrizeRuleRecord.getPrizeId()))
+                    coupon.set(specialPrizeRuleRecord.getCoupon());
+
+
+                int updatedSpecialPrizeRecord = dslTx.update(SPECIAL_PRIZE_RULE)
+                        .set(SPECIAL_PRIZE_RULE.CLAIMED, true)
+                        .set(SPECIAL_PRIZE_RULE.CLAIMED_DATE, LocalDateTime.now())
+                        .set(SPECIAL_PRIZE_RULE.CLAIMED_USER_NATIONAL_ID, nationalId)
+                        .where(SPECIAL_PRIZE_RULE.ID.eq(specialPrizeRuleRecord.getId()))
+                        .execute();
+
+                claimedPrizeId.set(specialPrizeRuleRecord.getPrizeId());
+                logger.info("Updated Special Prize record: " + updatedSpecialPrizeRecord);
+            });
+        } catch (Exception e) {
+            logger.error("Error during spin transaction for national ID: " + nationalId, e);
+            if (e instanceof WebApplicationException) {
+                throw (WebApplicationException) e;
+            }
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new CustomResponse<>("fail", "Алдаа гарлаа. Дахин оролдоно уу.", null))
+                    .build();
+        }
+
+        if (claimedPrizeId.get() != 0) {
+            PrizeListRecord specialPrizeInfoRecord = dsl.selectFrom(PRIZE_LIST)
+                    .where(PRIZE_LIST.ID.eq(claimedPrizeId.get()))
+                    .limit(1)
+                    .fetchOne();
+
+            logger.info("Super prize info record: " + (specialPrizeInfoRecord != null ? specialPrizeInfoRecord.formatJSON() : "No prize info found"));
+
+            if (couponPrizeIds.contains(claimedPrizeId.get())) {
+                prizeService.processPrizeAsync(claimedPrizeId.get(), rechargedMsisdn.get(), nationalId, tokiId, spinReq.getSpinId(), coupon.get());
+                return Response.ok()
+                        .entity(new CustomResponse<>(
+                                "success",
+                                "Coupon Prize",
+                                SpinRes.builder()
+                                        .prizeId(specialPrizeInfoRecord.getId())
+                                        .prizeName(specialPrizeInfoRecord.getPrizeName())
+                                        .isSpecial(specialPrizeInfoRecord.getSpecial())
+                                        .coupon(coupon.get())
+                        ))
+                        .build();
+            }
+
+            if (physicalPrizeIds.contains(claimedPrizeId.get())) {
+                prizeService.processPrizeAsync(claimedPrizeId.get(), rechargedMsisdn.get(), nationalId, tokiId, spinReq.getSpinId(), null);
+                return Response.ok()
+                        .entity(new CustomResponse<>(
+                                "success",
+                                "Physical Prize",
+                                SpinRes.builder()
+                                        .prizeId(specialPrizeInfoRecord.getId())
+                                        .prizeName(specialPrizeInfoRecord.getPrizeName())
+                                        .isSpecial(specialPrizeInfoRecord.getSpecial())
+                                        .coupon(null)
+                        ))
+                        .build();
+            }
+
+
+        } else {
+            int roll = (int) (Math.random() * 100) + 1;
+            logger.info("Regular price roll: " + roll);
+
+            int regularPrizeId;
+
+            if (roll <= 35)
+                regularPrizeId = 301;
+            else if (roll <= 60)
+                regularPrizeId = 302;
+            else if (roll <= 65)
+                regularPrizeId = 303;
+            else if (roll <= 95)
+                regularPrizeId = 304;
+            else
+                regularPrizeId = 305;
+
+            prizeService.processPrizeAsync(regularPrizeId, rechargedMsisdn.get(), nationalId, tokiId, spinReq.getSpinId(), null);
+            logger.info("Rolled regular prize id: " + regularPrizeId);
+
+            PrizeListRecord regularGiftRecord = dsl.selectFrom(PRIZE_LIST)
+                    .where(PRIZE_LIST.ID.eq(regularPrizeId))
+                    .limit(1)
+                    .fetchOne();
+
+            return Response.ok()
+                    .entity(new CustomResponse<>(
+                                    "success",
+                                    "Regular Prize",
+                                    SpinRes.builder()
+                                            .prizeId(regularGiftRecord.getId())
+                                            .prizeName(regularGiftRecord.getPrizeName())
+                                            .isSpecial(regularGiftRecord.getSpecial())
+                                            .coupon(null)
+                            )
+                    )
+                    .build();
         }
     }
 }

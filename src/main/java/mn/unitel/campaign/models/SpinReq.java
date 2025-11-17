@@ -9,7 +9,7 @@ import java.util.UUID;
 @Data
 @Getter
 @Setter
-public class SpinReq {
-    String phoneNo;
+public class SpinReq extends BaseJsonModel {
+    String nationalId;
     UUID spinId;
 }

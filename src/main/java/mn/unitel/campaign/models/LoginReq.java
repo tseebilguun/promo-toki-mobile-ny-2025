@@ -3,6 +3,6 @@ package mn.unitel.campaign.models;
 import lombok.Data;
 
 @Data
-public class LoginReq {
+public class LoginReq extends BaseJsonModel {
     String tokenId;
 }

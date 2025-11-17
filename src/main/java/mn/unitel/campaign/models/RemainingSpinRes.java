@@ -12,9 +12,11 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
-public class RemainingSpinRes {
+public class RemainingSpinRes extends BaseJsonModel {
     LocalDateTime currentDate;
     Integer remainingSpins;
     String phoneNo;
+    String tokiId;
+    String nationalId;
     UUID spinId;
 }

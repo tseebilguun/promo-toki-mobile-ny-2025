@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import mn.unitel.campaign.legacy.SmsService;
+import mn.unitel.campaign.services.TokiService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 import org.jooq.DSLContext;
@@ -29,6 +30,8 @@ public class ConsumerHandler {
 
     @ConfigProperty(name = "campaign.debug.mode", defaultValue = "false")
     boolean debugMode;
+    @Inject
+    TokiService tokiService;
 
 
     public void gotActive(String msisdn) {
@@ -78,7 +81,10 @@ public class ConsumerHandler {
                 .set(SPIN_ELIGIBLE_NUMBERS.RECHARGE_DATE, LocalDateTime.now())
                 .execute();
 
-        smsService.send("4477", msisdn, "", true); // TODO sms text
+        if (rechargeType.equalsIgnoreCase("Recharge"))
+            smsService.send("4477", msisdn, "Shine jiliin beleg avah erhtei bolloo.", true); // TODO change
+        else
+            smsService.send("4477", msisdn, "Toki Mobile-d negdej beleg neeh erhtei bolloo. {LINK}", true); // TODO Change
     }
 
     public String getNationalIdByPhoneNo(String phoneNo, String accountName) {

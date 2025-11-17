@@ -2,10 +2,14 @@ package mn.unitel.campaign;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import mn.unitel.campaign.models.LoginReq;
+import mn.unitel.campaign.models.SpinReq;
 import mn.unitel.campaign.services.AuthService;
+import mn.unitel.campaign.services.SpinnerService;
 
 @Path("/")
 @Consumes("application/json")
@@ -13,6 +17,8 @@ import mn.unitel.campaign.services.AuthService;
 public class Resources {
     @Inject
     AuthService authService;
+    @Inject
+    SpinnerService spinnerService;
 
     @POST
     @Path("/auth/login")
@@ -21,10 +27,15 @@ public class Resources {
         return authService.login(loginRequest);
     }
 
-    // Front end will call this API with the jwt token that was received from /auth/login
     @GET
     @Path("/spinnger/getInfo")
-    public Response getGeneralInfo() {
+    public Response getGeneralInfo(@Context ContainerRequestContext ctx) {
+        return spinnerService.getRemainingSpins(ctx);
+    }
 
+    @POST
+    @Path("spinner/spin")
+    public Response spin(SpinReq spinReq, @Context ContainerRequestContext ctx) {
+        return spinnerService.spin(spinReq, ctx);
     }
 }
