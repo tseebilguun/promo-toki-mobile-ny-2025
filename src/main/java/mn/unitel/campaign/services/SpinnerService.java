@@ -84,7 +84,10 @@ public class SpinnerService {
         try {
             String phoneNo = (String) ctx.getProperty("jwt.phone");
             String tokiId = (String) ctx.getProperty("jwt.tokiId");
+            String accountName = (String) ctx.getProperty("jwt.accountName");
             String nationalId = (String) ctx.getProperty("jwt.nationalId");
+
+            logger.info("JWS parsed info - Phone: " + phoneNo + ", TokiId: " + tokiId + ", AccountName: " + accountName + ", NationalId: " + nationalId);
 
             if (phoneNo == null || tokiId == null || nationalId == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
@@ -140,7 +143,7 @@ public class SpinnerService {
                         .build();
             }
 
-            logger.info(records.get(0).toString());
+            logger.info(records.get(0).formatJSON());
 
             SpinEligibleNumbersRecord firstRecord = records.get(0);
 

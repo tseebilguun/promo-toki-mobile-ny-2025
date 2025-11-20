@@ -99,7 +99,7 @@ public class TokiService {
         );
 
         return tokiUserClient.getUserData(
-                authRes.getData().getAccessToken(),
+                "Bearer " + authRes.getData().getAccessToken(),
                 TokiUserInfoReq.builder()
                         .requestId(tokiId)
                         .accountId(tokiId)

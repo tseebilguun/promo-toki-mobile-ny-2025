@@ -14,7 +14,6 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 public interface TokiUserClient {
     @POST
     @Path("/payment/authenticate")
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     TokiUserAuthRes getAuthUser(TokiUserAuthReq req);
 

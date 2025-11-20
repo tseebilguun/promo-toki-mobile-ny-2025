@@ -63,6 +63,8 @@ public class JwtAuthFilter implements ContainerRequestFilter {
         String subject = jwtService.extractSubject(token);
         String nationalId = jwtService.getStringClaim(token, "nationalId");
         String tokiId = jwtService.getStringClaim(token, "tokiId");
+        String phone = jwtService.getStringClaim(token, "phone");
+        String accountName = jwtService.getStringClaim(token, "accountName");
         if (nationalId == null) {
             abort(ctx, "Missing nationalId claim");
             return;
@@ -76,6 +78,8 @@ public class JwtAuthFilter implements ContainerRequestFilter {
         }
 
         ctx.setProperty("jwt.tokiId", tokiId);
+        ctx.setProperty("jwt.phone", phone);
+        ctx.setProperty("jwt.accountName", accountName);
         ctx.setProperty("jwt.nationalId", nationalId);
         ctx.setProperty("jwt.subject", subject);
     }
