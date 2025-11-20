@@ -20,7 +20,9 @@ public class JwtAuthFilter implements ContainerRequestFilter {
     private static final Logger LOG = Logger.getLogger(JwtAuthFilter.class);
 
     private static final Set<String> PUBLIC_SEGMENTS = Set.of(
-
+            "test/recharge",
+            "test/active",
+            "auth/login"
     );
 
     @Inject
