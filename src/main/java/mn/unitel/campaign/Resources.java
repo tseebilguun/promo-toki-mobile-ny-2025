@@ -59,4 +59,11 @@ public class Resources {
         consumerHandler.gotActive(msisdn);
         return Response.ok().build();
     }
+
+    @POST
+    @Path("/test/recharge")
+    public Response testRecharge(@QueryParam("msisdn") String msisdn) {
+        consumerHandler.onRecharge(msisdn);
+        return Response.ok().build();
+    }
 }

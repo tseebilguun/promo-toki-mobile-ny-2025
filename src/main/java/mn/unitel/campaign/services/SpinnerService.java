@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -45,6 +46,39 @@ public class SpinnerService {
 
     @Inject
     PrizeService prizeService;
+
+    private static final Map<Integer, int[][]> WEEK_RANGES = Map.of(
+            1, new int[][]{
+                    {30, 301},
+                    {50, 302},
+                    {55, 303},
+                    {85, 304},
+                    {100, 305}
+            },
+            2, new int[][]{
+                    {10, 303},
+                    {60, 304},
+                    {100, 305}
+            },
+            3, new int[][]{
+                    {10, 303},
+                    {60, 304},
+                    {100, 305}
+            },
+            4, new int[][]{
+                    {20, 302},
+                    {25, 303},
+                    {70, 304},
+                    {100, 305}
+            },
+            5, new int[][]{
+                    {30, 301},
+                    {50, 302},
+                    {55, 303},
+                    {85, 304},
+                    {100, 305}
+            }
+    );
 
     public Response getGemeralInfo(@Context ContainerRequestContext ctx) {
         try {
@@ -319,18 +353,20 @@ public class SpinnerService {
             int roll = (int) (Math.random() * 100) + 1;
             logger.info("Regular price roll: " + roll);
 
-            int regularPrizeId;
+            int regularPrizeId = 303;
 
-            if (roll <= 35)
-                regularPrizeId = 301;
-            else if (roll <= 60)
-                regularPrizeId = 302;
-            else if (roll <= 65)
-                regularPrizeId = 303;
-            else if (roll <= 95)
-                regularPrizeId = 304;
-            else
-                regularPrizeId = 305;
+            int[][] ranges = WEEK_RANGES.getOrDefault(
+                    weekNumber,
+                    new int[][]{{100, 303}}
+            );
+
+            for (int[] r : ranges) {
+                if (roll <= r[0]) {
+                    regularPrizeId = r[1];
+                    break;
+                }
+            }
+
 
             prizeService.processPrizeAsync(regularPrizeId, rechargedMsisdn.get(), nationalId, tokiId, spinReq.getSpinId(), null);
             logger.info("Rolled regular prize id: " + regularPrizeId);
