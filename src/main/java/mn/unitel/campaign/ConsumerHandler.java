@@ -83,7 +83,9 @@ public class ConsumerHandler {
 
         if (rechargeType.equalsIgnoreCase("Recharge"))
             smsService.send("4477", msisdn, "Shine jiliin beleg avah erhtei bolloo.", true); // TODO change
-        else
+        else if (rechargeType.equalsIgnoreCase("New Number"))
+            smsService.send("4477", msisdn, "Toki Mobile-d negdej beleg neeh erhtei bolloo. {LINK}", true); // TODO Change
+        else if (rechargeType.equalsIgnoreCase("Invitation"))
             smsService.send("4477", msisdn, "Toki Mobile-d negdej beleg neeh erhtei bolloo. {LINK}", true); // TODO Change
     }
 }

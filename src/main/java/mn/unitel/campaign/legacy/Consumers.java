@@ -54,7 +54,7 @@ public class Consumers {
                 return;
 
 
-            consumerHandler.gotActive(msisdn);
+//            consumerHandler.gotActive(msisdn);
 
         } catch (Exception e) {
             logger.error("JSON parsing failed", e);
@@ -83,7 +83,7 @@ public class Consumers {
             }
 
             if (rechargeNoti.getEntryLevelOffer().matches("34110|34111")) { //TODO Change
-                consumerHandler.onRecharge(msisdn);
+//                consumerHandler.onRecharge(msisdn);
             }
 
         } catch (Exception e) {

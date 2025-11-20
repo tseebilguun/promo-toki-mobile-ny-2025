@@ -1,0 +1,138 @@
+package mn.unitel.campaign.services;
+
+import DTO.DTO_response.FetchServiceDetailsResponse;
+import Executable.APIUtil;
+import io.smallrye.context.api.NamedInstance;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Response;
+import mn.unitel.campaign.ConsumerHandler;
+import mn.unitel.campaign.CustomResponse;
+import mn.unitel.campaign.Helper;
+import mn.unitel.campaign.jooq.tables.records.SpinEligibleNumbersRecord;
+import mn.unitel.campaign.legacy.SmsService;
+import mn.unitel.campaign.models.InvitationReq;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.context.ManagedExecutor;
+import org.jboss.logging.Logger;
+import org.jooq.DSLContext;
+
+import java.util.UUID;
+
+import static mn.unitel.campaign.jooq.Tables.SPIN_ELIGIBLE_NUMBERS;
+
+@ApplicationScoped
+public class InvitationService {
+    Logger logger = Logger.getLogger(PrizeService.class);
+
+    @Inject
+    DSLContext dsl;
+
+    @Inject
+    TokiService tokiService;
+
+    @Inject
+    Helper helper;
+    @Inject
+    ConsumerHandler consumerHandler;
+
+
+    public Response sendInvite(InvitationReq req, ContainerRequestContext ctx) {
+        String nationalId = (String) ctx.getProperty("nationalId");
+        String tokiId = (String) ctx.getProperty("tokiId");
+        String phoneNo = (String) ctx.getProperty("phoneNo");
+        String accountName = (String) ctx.getProperty("accountName");
+
+        if (req.getInvitedMsisdn() == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(
+                            new CustomResponse<>(
+                                    "fail",
+                                    "Утасны дугаар оруулна уу",
+                                    null
+                            )
+                    )
+                    .build();
+        }
+
+        if (!helper.isTokiNumber(req.getInvitedMsisdn())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(
+                            new CustomResponse<>(
+                                    "fail",
+                                    "Оруулсан дугаар Toki Mobile биш байна",
+                                    null
+                            )
+                    )
+                    .build();
+        }
+
+        SpinEligibleNumbersRecord record = dsl.selectFrom(SPIN_ELIGIBLE_NUMBERS)
+                .where(SPIN_ELIGIBLE_NUMBERS.PHONE_NO.eq(req.getInvitedMsisdn()))
+                .and(SPIN_ELIGIBLE_NUMBERS.RECHARGE_TYPE.eq("New Number"))
+                .and(SPIN_ELIGIBLE_NUMBERS.INVITED_BY.isNull())
+                .limit(1)
+                .fetchOne();
+
+        if (record == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(
+                            new CustomResponse<>(
+                                    "fail",
+                                    "Урих боломжгүй дугаар байна", // TODO Change
+                                    null
+                            )
+                    )
+                    .build();
+        }
+
+        UUID newNumberId = record.getId();
+
+        int updatedRecord = dsl.update(SPIN_ELIGIBLE_NUMBERS)
+                .set(SPIN_ELIGIBLE_NUMBERS.INVITED_BY, nationalId)
+                .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(newNumberId))
+                .execute();
+
+        if (updatedRecord == 0) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(
+                            new CustomResponse<>(
+                                    "fail",
+                                    "Дугаар урих үйлдэл амжилтгүй боллоо", // TODO Change
+                                    null
+                            )
+                    )
+                    .build();
+        }
+
+
+
+
+
+        try {
+            consumerHandler.grantSpin(phoneNo, accountName, nationalId, "Invitation");
+
+            return Response.ok()
+                    .entity(
+                            new CustomResponse<>(
+                                    "success",
+                                    "Дугаар урих үйлдэл амжилттай боллоо", // TODO Change
+                                    null
+                            )
+                    )
+                    .build();
+        } catch (Exception e) {
+            logger.errorf(e, "Failed to process invitation for invited number %s by inviter %s", req.getInvitedMsisdn(), nationalId);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(
+                            new CustomResponse<>(
+                                    "fail",
+                                    "Дугаар урих үйлдэл амжилтгүй боллоо", // TODO Change
+                                    null
+                            )
+                    )
+                    .build();
+        }
+    }
+}

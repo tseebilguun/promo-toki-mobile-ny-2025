@@ -59,8 +59,8 @@ public class PrizeService {
                             processPhysicalPrize(prizeId, nationalId, msisdn, spinId, tokiId);
                     case 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217 ->
                             processCouponPrize(prizeId, nationalId, msisdn, spinId, tokiId, coupon);
-                    case 301, 302, 304 -> processDataPrize(prizeId, nationalId, msisdn, spinId, tokiId);
-                    case 303 -> processRecurringDataPrize(prizeId, nationalId, msisdn, spinId, tokiId);
+                    case 301, 302, 303 -> processDataPrize(prizeId, nationalId, msisdn, spinId, tokiId);
+                    case 304, 305 -> processRecurringDataPrize(prizeId, nationalId, msisdn, spinId, tokiId);
                     default -> { /* ignore invalid prize IDs */ }
                 }
             } catch (Exception e) {
@@ -68,11 +68,6 @@ public class PrizeService {
                 logger.info(e.getMessage());
             }
         });
-    }
-
-    private void processRecurringDataPrize(int prizeId, String nationalId, String msisdn, UUID spinId, String tokiId) {
-        logger.info("Processing recurring data prize: " + prizeId + " for MSISDN: " + msisdn + ", National ID: " + nationalId + ", Spin Eligible ID: " + spinId + ", Toki ID: " + tokiId);
-
     }
 
     private void processPhysicalPrize(int prizeId, String nationalId, String msisdn, UUID spinId, String tokiId) {
@@ -151,20 +146,22 @@ public class PrizeService {
             return;
         }
 
-        String expireDate;
+        LocalDateTime expireDate;
         String dataAmount;
         String dataAmountText;
+        Integer dataDuration;
+        String expireDateStr;
 
         switch (prizeId) {
             case 301 -> {
                 dataAmount = "3221225472";
                 expireDate = LocalDateTime.now()
-                        .plusDays(2)
+                        .plusDays(1)
                         .withHour(23)
                         .withMinute(59)
-                        .withSecond(59)
-                        .format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+                        .withSecond(59);
                 dataAmountText = "3GB";
+                dataDuration = 2;
             }
             case 302 -> {
                 dataAmount = "5905580032";
@@ -172,9 +169,9 @@ public class PrizeService {
                         .plusDays(4)
                         .withHour(23)
                         .withMinute(59)
-                        .withSecond(59)
-                        .format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+                        .withSecond(59);
                 dataAmountText = "5.5GB";
+                dataDuration = 5;
             }
             case 303 -> {
                 dataAmount = "59055800320";
@@ -182,9 +179,9 @@ public class PrizeService {
                         .plusDays(9)
                         .withHour(23)
                         .withMinute(59)
-                        .withSecond(59)
-                        .format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+                        .withSecond(59);
                 dataAmountText = "55GB";
+                dataDuration = 10;
             }
             default -> {
                 logger.info("Invalid prize id: " + prizeId);
@@ -192,7 +189,71 @@ public class PrizeService {
             }
         }
 
-        JsonNode addProductRes = Utils.toJsonNode(APIUtil.addDeleteProduct(msisdn, "", dataAmount, "", expireDate, "Campaign", "add", debugMode)); // TODO Guitseeh
+        expireDateStr = expireDate.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+
+        JsonNode addProductRes = Utils.toJsonNode(APIUtil.addDeleteProduct(msisdn, "", dataAmount, "A25_063", expireDateStr, "Campaign", "add", debugMode));
+
+        if (addProductRes == null || !addProductRes.path("result").asText().equals("success")) {
+            logger.info("Failed to add product for data prize. Prize ID: " + prizeId + ", MSISDN: " + msisdn + ", National ID: " + nationalId + ", Spin Eligible ID: " + spinId);
+            dsl.update(SPIN_ELIGIBLE_NUMBERS)
+                    .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, LocalDateTime.now())
+                    .set(SPIN_ELIGIBLE_NUMBERS.PRIZE_ID, prizeId)
+                    .set(SPIN_ELIGIBLE_NUMBERS.SUCCESS, false)
+                    .set(SPIN_ELIGIBLE_NUMBERS.RESPONSE, addProductRes.toString())
+                    .set(SPIN_ELIGIBLE_NUMBERS.PACKAGE_DURATION, dataDuration)
+                    .set(SPIN_ELIGIBLE_NUMBERS.PACKAGE_VOLUME, dataAmount)
+                    .set(SPIN_ELIGIBLE_NUMBERS.PACKAGE_EXPIRE_DATE, expireDate)
+                    .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
+                    .execute();
+        } else {
+            dsl.update(SPIN_ELIGIBLE_NUMBERS)
+                    .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, LocalDateTime.now())
+                    .set(SPIN_ELIGIBLE_NUMBERS.PRIZE_ID, prizeId)
+                    .set(SPIN_ELIGIBLE_NUMBERS.SUCCESS, true)
+                    .set(SPIN_ELIGIBLE_NUMBERS.RESPONSE, addProductRes.toString())
+                    .set(SPIN_ELIGIBLE_NUMBERS.PACKAGE_DURATION, dataDuration)
+                    .set(SPIN_ELIGIBLE_NUMBERS.PACKAGE_VOLUME, dataAmount)
+                    .set(SPIN_ELIGIBLE_NUMBERS.PACKAGE_EXPIRE_DATE, expireDate)
+                    .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
+                    .execute();
+
+            smsService.send("4477", msisdn, "Shine jiliin uramshuulliin " +
+                            expireDateStr.substring(0, 4) + "/" +
+                            expireDateStr.substring(0, 6) + "/" +
+                            expireDateStr.substring(0, 8) + " hurtel ashiglah " + dataAmountText + " idevhejlee."
+                    , true); // TODO change
+
+            tokiService.sendPushNoti(tokiId, ""); // TODO change
+        }
+    }
+
+    private void processRecurringDataPrize(int prizeId, String nationalId, String msisdn, UUID spinId, String tokiId) {
+        logger.info("Processing recurring data prize: " + prizeId + " for MSISDN: " + msisdn + ", National ID: " + nationalId + ", Spin Eligible ID: " + spinId + ", Toki ID: " + tokiId);
+        SpinEligibleNumbersRecord spinRecord = dsl.selectFrom(SPIN_ELIGIBLE_NUMBERS)
+                .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
+                .limit(1)
+                .fetchOne();
+
+        if (spinRecord == null) {
+            logger.info("Spin record is not found for processing data prize. Spin ID: " + spinId + ", MSISDN: " + msisdn + ", National ID: " + nationalId + ", Prize ID: " + prizeId);
+            return;
+        }
+
+        String offerName;
+        switch (prizeId) {
+            case 304 -> {
+                offerName = "Toki 3GB 7 хоног"; // TODO Change
+            }
+            case 305 -> {
+                offerName = "Toki 5.5GB 30 хоног"; // TODO Change
+            }
+            default -> {
+                logger.info("Invalid prize id: " + prizeId);
+                return;
+            }
+        }
+
+        JsonNode addProductRes = Utils.toJsonNode(APIUtil.addDeleteProduct(msisdn, offerName, "", "A25_063", "", "Campaign", "add", debugMode));
 
         if (addProductRes == null || !addProductRes.path("result").asText().equals("success")) {
             logger.info("Failed to add product for data prize. Prize ID: " + prizeId + ", MSISDN: " + msisdn + ", National ID: " + nationalId + ", Spin Eligible ID: " + spinId);
@@ -212,11 +273,11 @@ public class PrizeService {
                     .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
                     .execute();
 
-            smsService.send("4477", msisdn, "Shine jiliin uramshuulliin " +
-                            expireDate.substring(0, 4) + "/" +
-                            expireDate.substring(0, 6) + "/" +
-                            expireDate.substring(0, 8) + " hurtel ashiglah " + dataAmountText + " idevhejlee."
-                    , true); // TODO change
+//            smsService.send("4477", msisdn, "Shine jiliin uramshuulliin " +
+//                            expireDateStr.substring(0, 4) + "/" +
+//                            expireDateStr.substring(0, 6) + "/" +
+//                            expireDateStr.substring(0, 8) + " hurtel ashiglah " + dataAmountText + " idevhejlee."
+//                    , true); // TODO change
 
             tokiService.sendPushNoti(tokiId, ""); // TODO change
         }

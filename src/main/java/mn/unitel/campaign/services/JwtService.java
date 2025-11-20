@@ -34,9 +34,10 @@ public class JwtService {
         hmacKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateTokenWithPhone(String subject, String phoneNo, String tokiId, String nationalId) {
+    public String generateTokenWithPhone(String subject, String phoneNo, String accountName, String tokiId, String nationalId) {
         Map<String, Object> claims = Map.of(
-                "nationalId", phoneNo,
+                "phone", phoneNo,
+                "accountName", accountName,
                 "tokiId", tokiId,
                 "nationalId", nationalId
         );

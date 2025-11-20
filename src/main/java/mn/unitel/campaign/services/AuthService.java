@@ -93,6 +93,7 @@ public class AuthService {
                                     jwtService.generateTokenWithPhone(
                                             tokiUserInfo.getData().getNationalId(),
                                             tokiUserInfo.getData().getPhoneNo(),
+                                            accountName,
                                             tokiId,
                                             tokiUserInfo.getData().getNationalId()
                                     )

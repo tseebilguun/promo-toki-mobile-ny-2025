@@ -11,6 +11,7 @@ import mn.unitel.campaign.Helper;
 import mn.unitel.campaign.jooq.tables.records.PrizeListRecord;
 import mn.unitel.campaign.jooq.tables.records.SpecialPrizeRuleRecord;
 import mn.unitel.campaign.jooq.tables.records.SpinEligibleNumbersRecord;
+import mn.unitel.campaign.models.InvitationReq;
 import mn.unitel.campaign.models.RemainingSpinRes;
 import mn.unitel.campaign.models.SpinReq;
 import mn.unitel.campaign.models.SpinRes;

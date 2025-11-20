@@ -6,9 +6,11 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import mn.unitel.campaign.models.InvitationReq;
 import mn.unitel.campaign.models.LoginReq;
 import mn.unitel.campaign.models.SpinReq;
 import mn.unitel.campaign.services.AuthService;
+import mn.unitel.campaign.services.InvitationService;
 import mn.unitel.campaign.services.SpinnerService;
 
 @Path("/")
@@ -17,8 +19,12 @@ import mn.unitel.campaign.services.SpinnerService;
 public class Resources {
     @Inject
     AuthService authService;
+
     @Inject
     SpinnerService spinnerService;
+
+    @Inject
+    InvitationService invitationService;
 
     @POST
     @Path("/auth/login")
@@ -37,5 +43,11 @@ public class Resources {
     @Path("spinner/spin")
     public Response spin(SpinReq spinReq, @Context ContainerRequestContext ctx) {
         return spinnerService.spin(spinReq, ctx);
+    }
+
+    @POST
+    @Path("invite/send")
+    public Response sendInvite(InvitationReq req, @Context ContainerRequestContext ctx) {
+        return invitationService.sendInvite(req, ctx);
     }
 }
