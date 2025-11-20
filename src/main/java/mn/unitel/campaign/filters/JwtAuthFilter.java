@@ -17,12 +17,12 @@ import java.util.Set;
 @Priority(Priorities.AUTHENTICATION)
 public class JwtAuthFilter implements ContainerRequestFilter {
 
-    private static final Logger LOG = Logger.getLogger(JwtAuthFilter.class);
+    private static final Logger logger = Logger.getLogger(JwtAuthFilter.class);
 
-    private static final Set<String> PUBLIC_SEGMENTS = Set.of(
-            "test/recharge",
-            "test/active",
-            "auth/login"
+    private static final Set<String> PUBLIC_PATHS = Set.of(
+            "/auth/login",
+            "/test/active",
+            "/test/recharge"
     );
 
     @Inject
@@ -34,15 +34,14 @@ public class JwtAuthFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext ctx) {
         String rawPath = ctx.getUriInfo().getPath();
-        String path = rawPath == null ? "" : rawPath.trim();
-        LOG.debug("Incoming request path: " + path);
+        String path = rawPath == null ? "" : rawPath.trim().toLowerCase();
+
+        if (PUBLIC_PATHS.contains(path)) {
+            logger.debug("Public endpoint: " + path);
+            return;
+        }
 
         String firstSegment = extractFirstSegment(path);
-        boolean isPublic = PUBLIC_SEGMENTS.contains(firstSegment);
-
-        if (isPublic)
-            return;
-
 
         String authHeader = ctx.getHeaderString("Authorization");
         if (authHeader == null || !authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
@@ -62,17 +61,15 @@ public class JwtAuthFilter implements ContainerRequestFilter {
         }
 
         String subject = jwtService.extractSubject(token);
-        String phoneNo = jwtService.getStringClaim(token, "nationalId");
-        String tokiId = jwtService.getStringClaim(token, "tokiId");
         String nationalId = jwtService.getStringClaim(token, "nationalId");
-        if (phoneNo == null) {
+        String tokiId = jwtService.getStringClaim(token, "tokiId");
+        if (nationalId == null) {
             abort(ctx, "Missing nationalId claim");
             return;
         }
 
-        // Optional: Rate limit spin endpoints
         if ("spin".equals(firstSegment)) {
-            if (!rateLimiter.isAllowed(phoneNo)) {
+            if (!rateLimiter.isAllowed(nationalId)) {
                 abort(ctx, "Too many spin requests. Please wait.");
                 return;
             }
@@ -81,17 +78,16 @@ public class JwtAuthFilter implements ContainerRequestFilter {
         ctx.setProperty("jwt.tokiId", tokiId);
         ctx.setProperty("jwt.nationalId", nationalId);
         ctx.setProperty("jwt.subject", subject);
-        ctx.setProperty("jwt.nationalId", phoneNo);
     }
 
     private String extractFirstSegment(String path) {
         if (path.isEmpty()) return "";
         int slash = path.indexOf('/');
-        return (slash == -1 ? path : path.substring(0, slash)).toLowerCase();
+        return (slash == -1 ? path : path.substring(0, slash));
     }
 
     private void abort(ContainerRequestContext ctx, String message) {
-        LOG.debug("Aborting request: " + message);
+        logger.debug("Aborting request: " + message);
         ctx.abortWith(Response.status(Response.Status.UNAUTHORIZED)
                 .entity(new CustomResponse<>("fail", message, null))
                 .build());

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import jakarta.annotation.Priority;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
@@ -21,29 +22,33 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Provider
+@Priority(jakarta.ws.rs.Priorities.AUTHENTICATION - 1) // Ensure runs before JwtAuthFilter
 public class LoggingFilter implements ContainerRequestFilter, ContainerResponseFilter {
+
     private static final Logger logger = Logger.getLogger(LoggingFilter.class);
     private static final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule().addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
+            .registerModule(new JavaTimeModule()
+                    .addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
         logger.info("***************** Incoming Request *****************");
-        logger.infof("%s %s", requestContext.getMethod(), requestContext.getUriInfo().getRequestUri().toString());
+        logger.infof("%s %s",
+                requestContext.getMethod(),
+                requestContext.getUriInfo().getRequestUri().toString());
 
         if (requestContext.hasEntity()) {
             InputStream originalInputStream = requestContext.getEntityStream();
             String body = inputStreamToString(originalInputStream);
 
-            // ALWAYS reset the stream first - this is critical!
+            // Reset entity stream so resource / later filters can read it
             requestContext.setEntityStream(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)));
 
-            // Then log if not blank
             if (!body.isBlank()) {
                 String prettyBody = formatJson(body);
-                if (prettyBody.length() < 10000) {
+                if (prettyBody.length() < 10_000) {
                     logger.infof("Incoming request Body: %s", prettyBody);
                 }
             }
@@ -51,7 +56,8 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     }
 
     @Override
-    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
+    public void filter(ContainerRequestContext requestContext,
+                       ContainerResponseContext responseContext) throws IOException {
         logger.info("***************** Incoming Request's Response *****************");
         logger.info("Status: " + responseContext.getStatus());
         if (responseContext.hasEntity()) {
@@ -68,12 +74,11 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         while ((length = inputStream.read(buffer)) != -1) {
             result.write(buffer, 0, length);
         }
-        return result.toString(StandardCharsets.UTF_8.name());
+        return result.toString(StandardCharsets.UTF_8);
     }
 
     private String serializeToJson(Object entity) {
         try {
-            // Serialize the entity to a beautified JSON string
             return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(entity);
         } catch (IOException e) {
             logger.error("Failed to serialize response body to JSON", e);
