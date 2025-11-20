@@ -13,10 +13,10 @@ import java.util.List;
 public class CampaignConfig {
     private static final Logger logger = Logger.getLogger(CampaignConfig.class);
 
-    @ConfigProperty(name = "campaign.start", defaultValue = "2023-01-01T00:00:00")
+    @ConfigProperty(name = "campaign.start", defaultValue = "2023-01-01T00:00:00") // TODO Change
     LocalDateTime startDate;
 
-    @ConfigProperty(name = "campaign.end", defaultValue = "2099-12-31T23:59:59")
+    @ConfigProperty(name = "campaign.end", defaultValue = "2026-12-31T23:59:59") //TODO change
     LocalDateTime endDate;
 
     @ConfigProperty(name = "campaign.test.numbers", defaultValue = "89115441")

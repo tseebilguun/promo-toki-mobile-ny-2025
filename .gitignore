@@ -12,6 +12,9 @@ release.properties
 .settings/
 bin/
 
+# log directory
+log/
+
 # IntelliJ
 .idea
 *.ipr

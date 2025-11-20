@@ -39,22 +39,20 @@ public class Consumers {
 
             String msisdn = statusNoti.getPhoneNo();
 
-            if (!campaignConfig.shouldProcess(msisdn)){
-                logger.infof("%s is not a test number", msisdn);
+            if (!campaignConfig.shouldProcess(msisdn))
                 return;
-            }
 
 
-            if (!campaignConfig.isWithinCampaignPeriod(LocalDateTime.now())){
-                logger.info("Campaign period is over");
+
+            if (!campaignConfig.isWithinCampaignPeriod(LocalDateTime.now()))
                 return;
-            }
+
 
             if (!(statusNoti.getFormerStatus().equals("Pending Activation") && statusNoti.getCurrentStatus().equals("Active")))
                 return;
 
 
-//            consumerHandler.gotActive(msisdn);
+            consumerHandler.gotActive(msisdn);
 
         } catch (Exception e) {
             logger.error("JSON parsing failed", e);
@@ -71,19 +69,16 @@ public class Consumers {
 
             String msisdn = rechargeNoti.getRechargedNumber();
 
-            if (!campaignConfig.shouldProcess(msisdn)){
-                logger.infof("%s is not a test number", msisdn);
+            if (!campaignConfig.shouldProcess(msisdn))
                 return;
-            }
 
 
-            if (!campaignConfig.isWithinCampaignPeriod(LocalDateTime.now())){
-                logger.info("Campaign period is over");
+            if (!campaignConfig.isWithinCampaignPeriod(LocalDateTime.now()))
                 return;
-            }
+
 
             if (rechargeNoti.getEntryLevelOffer().matches("34110|34111")) { //TODO Change
-//                consumerHandler.onRecharge(msisdn);
+                consumerHandler.onRecharge(msisdn);
             }
 
         } catch (Exception e) {
