@@ -77,9 +77,9 @@ public class TokiService {
             tokiGeneralClient.send(
                     token,
                     TokiNotiReq.builder()
-                            .title(title) // TODO Change
+                            .title(title)
                             .body(body)
-                            .url("https://link.toki.mn/VsQK") // TODO Change
+                            .url("https://link.toki.mn/VsQK") // TODO deeplink
                             .buttonName("OK") // TODO Change
                             .accountId(tokiId)
                             .icon("test")

@@ -25,6 +25,8 @@ public class Resources {
 
     @Inject
     InvitationService invitationService;
+    @Inject
+    ConsumerHandler consumerHandler;
 
     @POST
     @Path("/auth/login")
@@ -49,5 +51,12 @@ public class Resources {
     @Path("invite/send")
     public Response sendInvite(InvitationReq req, @Context ContainerRequestContext ctx) {
         return invitationService.sendInvite(req, ctx);
+    }
+
+    @POST
+    @Path("test/active")
+    public Response testActive(@QueryParam("msisdn") String msisdn) {
+        consumerHandler.gotActive(msisdn);
+        return Response.ok().build();
     }
 }

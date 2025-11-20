@@ -30,6 +30,7 @@ public class ConsumerHandler {
 
     @ConfigProperty(name = "campaign.debug.mode", defaultValue = "false")
     boolean debugMode;
+
     @Inject
     TokiService tokiService;
 
@@ -86,6 +87,6 @@ public class ConsumerHandler {
         else if (rechargeType.equalsIgnoreCase("New Number"))
             smsService.send("4477", msisdn, "Toki Mobile-d negdej '55 Belegtei shine jil'-d oroltson beleg neeh erhtei bolloo. https://link.toki.mn/", true); // TODO deeplink
         else if (rechargeType.equalsIgnoreCase("Invitation"))
-            smsService.send("4477", msisdn, "", true); // TODO deeplink
+            logger.info(""); // TODO neg log bichih
     }
 }

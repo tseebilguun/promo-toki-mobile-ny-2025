@@ -49,7 +49,7 @@ public class InvitationService {
                     .entity(
                             new CustomResponse<>(
                                     "fail",
-                                    "Утасны дугаар оруулна уу",
+                                    "Toki Mobile-н 55-тай дугаар оруулна уу.",
                                     null
                             )
                     )
@@ -61,7 +61,7 @@ public class InvitationService {
                     .entity(
                             new CustomResponse<>(
                                     "fail",
-                                    "Оруулсан дугаар Toki Mobile биш байна",
+                                    "Toki Mobile-н 55-тай дугаар оруулна уу.",
                                     null
                             )
                     )
@@ -71,7 +71,6 @@ public class InvitationService {
         SpinEligibleNumbersRecord record = dsl.selectFrom(SPIN_ELIGIBLE_NUMBERS)
                 .where(SPIN_ELIGIBLE_NUMBERS.PHONE_NO.eq(req.getInvitedMsisdn()))
                 .and(SPIN_ELIGIBLE_NUMBERS.RECHARGE_TYPE.eq("New Number"))
-                .and(SPIN_ELIGIBLE_NUMBERS.INVITED_BY.isNull())
                 .limit(1)
                 .fetchOne();
 
@@ -80,7 +79,19 @@ public class InvitationService {
                     .entity(
                             new CustomResponse<>(
                                     "fail",
-                                    "Урих боломжгүй дугаар байна", // TODO Change
+                                    "Шалгуур хангаагүй дугаар байна. Зөвхөн шинэ хэрэглэгчийг урих боломжтой.",
+                                    null
+                            )
+                    )
+                    .build();
+        }
+
+        if (record.getInvitedBy() != null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(
+                            new CustomResponse<>(
+                                    "fail",
+                                    "Уригдсан хэрэглэгч байна. Өөр дугаар оруулна уу.",
                                     null
                             )
                     )
@@ -99,7 +110,7 @@ public class InvitationService {
                     .entity(
                             new CustomResponse<>(
                                     "fail",
-                                    "Дугаар урих үйлдэл амжилтгүй боллоо", // TODO Change
+                                    "Алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.",
                                     null
                             )
                     )
@@ -117,7 +128,7 @@ public class InvitationService {
                     .entity(
                             new CustomResponse<>(
                                     "success",
-                                    "Дугаар урих үйлдэл амжилттай боллоо", // TODO Change
+                                    "Найзаа урьж бэлэг авах 1 эрхтэй боллоо \uD83C\uDF89",
                                     null
                             )
                     )
@@ -128,7 +139,7 @@ public class InvitationService {
                     .entity(
                             new CustomResponse<>(
                                     "fail",
-                                    "Дугаар урих үйлдэл амжилтгүй боллоо", // TODO Change
+                                    "Алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.",
                                     null
                             )
                     )
