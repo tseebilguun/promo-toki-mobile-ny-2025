@@ -30,7 +30,7 @@ public class Resources {
     @GET
     @Path("/spinnger/getInfo")
     public Response getGeneralInfo(@Context ContainerRequestContext ctx) {
-        return spinnerService.getRemainingSpins(ctx);
+        return spinnerService.getGemeralInfo(ctx);
     }
 
     @POST

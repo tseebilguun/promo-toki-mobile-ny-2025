@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class LoginReq extends BaseJsonModel {
-    String tokenId;
+    String msisdn;
 }

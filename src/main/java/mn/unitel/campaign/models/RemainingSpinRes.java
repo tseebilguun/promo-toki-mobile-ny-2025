@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -18,5 +19,7 @@ public class RemainingSpinRes extends BaseJsonModel {
     String phoneNo;
     String tokiId;
     String nationalId;
+    List<Integer> claimedPrizes;
     UUID spinId;
+    Integer weekNumber;
 }

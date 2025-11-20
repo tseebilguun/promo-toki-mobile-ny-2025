@@ -48,7 +48,7 @@ public class SpinnerService {
     @Inject
     PrizeService prizeService;
 
-    public Response getRemainingSpins(@Context ContainerRequestContext ctx) {
+    public Response getGemeralInfo(@Context ContainerRequestContext ctx) {
         try {
             String phoneNo = (String) ctx.getProperty("jwt.phone");
             String tokiId = (String) ctx.getProperty("jwt.tokiId");
@@ -67,7 +67,22 @@ public class SpinnerService {
                     .orderBy(SPIN_ELIGIBLE_NUMBERS.RECHARGE_DATE.asc())
                     .fetch();
 
-            logger.info("Total records : " + records.size());
+            logger.info("Total records of unused spins: " + records.size());
+
+            List<SpinEligibleNumbersRecord> claimedPrizes = dsl
+                    .selectFrom(SPIN_ELIGIBLE_NUMBERS)
+                    .where(SPIN_ELIGIBLE_NUMBERS.NATIONAL_ID.eq(nationalId))
+                    .and(SPIN_ELIGIBLE_NUMBERS.USED.eq(true))
+                    .orderBy(SPIN_ELIGIBLE_NUMBERS.RECHARGE_DATE.desc())
+                    .fetch();
+
+            List<Integer> claimedPrizeIds = claimedPrizes.stream()
+                    .map(SpinEligibleNumbersRecord::getPrizeId)
+                    .toList();
+
+
+            LocalDateTime now = LocalDateTime.now();
+            Integer weekNumber = helper.getCurrentWeekNumber(now);
 
             if (records.isEmpty()) {
                 return Response.ok(
@@ -75,12 +90,14 @@ public class SpinnerService {
                                         "success",
                                         "Танд хүрд эргүүлэх эрх байхгүй байна.",
                                         RemainingSpinRes.builder()
-                                                .currentDate(LocalDateTime.now())
+                                                .currentDate(now)
                                                 .remainingSpins(records.size())
                                                 .phoneNo(phoneNo)
                                                 .tokiId(tokiId)
                                                 .nationalId(nationalId)
+                                                .claimedPrizes(claimedPrizeIds)
                                                 .spinId(null)
+                                                .weekNumber(weekNumber)
                                                 .build()
                                 )
                         )
@@ -96,12 +113,14 @@ public class SpinnerService {
                                     "success",
                                     "Remaining spins fetched successfully",
                                     RemainingSpinRes.builder()
-                                            .currentDate(LocalDateTime.now())
+                                            .currentDate(now)
                                             .remainingSpins(records.size())
                                             .phoneNo(phoneNo)
                                             .tokiId(tokiId)
                                             .nationalId(nationalId)
+                                            .claimedPrizes(claimedPrizeIds)
                                             .spinId(firstRecord.getId())
+                                            .weekNumber(weekNumber)
                                             .build()
                             )
                     )
@@ -119,6 +138,7 @@ public class SpinnerService {
         String phoneNo = (String) ctx.getProperty("jwt.phone");
         String tokiId = (String) ctx.getProperty("jwt.tokiId");
         String nationalId = (String) ctx.getProperty("jwt.nationalId");
+        Integer weekNumber = spinReq.getWeekNumber();
 
         if (phoneNo == null || tokiId == null || nationalId == null) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -283,6 +303,14 @@ public class SpinnerService {
                         ))
                         .build();
             }
+
+            return Response.ok().entity(
+                    new CustomResponse<>(
+                            "fail",
+                            "Алдаа гарлаа. Дахин оролдоно уу.",
+                            null
+                    )
+            ).build();
 
 
         } else {

@@ -12,4 +12,5 @@ import java.util.UUID;
 public class SpinReq extends BaseJsonModel {
     String nationalId;
     UUID spinId;
+    Integer weekNumber;
 }

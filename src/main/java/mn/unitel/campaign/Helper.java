@@ -1,6 +1,8 @@
 package mn.unitel.campaign;
 
+import Executable.APIUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -11,6 +13,10 @@ import org.jboss.logging.Logger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Month;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +33,9 @@ public class Helper {
 
     @Inject
     ObjectMapper objectMapper;
+
+    @ConfigProperty (name = "campaign.debug.mode", defaultValue = "false")
+    boolean debugMode;
 
     private volatile Set<String> blacklistedNumbers = Collections.emptySet();
 
@@ -66,5 +75,32 @@ public class Helper {
             return false;
         }
         return blacklistedNumbers.contains(msisdn);
+    }
+
+    public Integer getCurrentWeekNumber(LocalDateTime now) {
+        LocalDate date = now.toLocalDate();
+
+        if (date.getYear() != 2025 || date.getMonth() != Month.DECEMBER) {
+            return 0;
+        }
+
+        LocalDate dec1 = LocalDate.of(2025, 12, 1);
+        int dayOffset = (int) ChronoUnit.DAYS.between(dec1, date);
+
+        int week = (dayOffset / 7) + 1;
+
+        return Math.min(week, 5);
+    }
+
+    public String getNationalIdByPhoneNo(String phoneNo, String accountName) {
+        String rd;
+        try {
+            JsonNode rdInfo = Utils.toJsonNode(APIUtil.getRegIDByPhoneNo(phoneNo, accountName, debugMode));
+            rd = rdInfo.path("rd").asText();
+        } catch (Exception e) {
+            return "NOT_FOUND";
+        }
+
+        return rd;
     }
 }

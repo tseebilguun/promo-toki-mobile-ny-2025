@@ -43,7 +43,7 @@ public class ConsumerHandler {
         FetchServiceDetailsResponse servideDetails = APIUtil.fetchServiceDetails(msisdn, debugMode);
         String accountName = servideDetails.getAccountName();
 
-        String nationalId = getNationalIdByPhoneNo(msisdn, accountName);
+        String nationalId = helper.getNationalIdByPhoneNo(msisdn, accountName);
 
         if (nationalId.equals("NOT_FOUND")) {
             logger.infof("National ID not found for number %s. Skipping spin grant.", msisdn);
@@ -62,7 +62,7 @@ public class ConsumerHandler {
         FetchServiceDetailsResponse servideDetails = APIUtil.fetchServiceDetails(msisdn, debugMode);
         String accountName = servideDetails.getAccountName();
 
-        String nationalId = getNationalIdByPhoneNo(msisdn, accountName);
+        String nationalId = helper.getNationalIdByPhoneNo(msisdn, accountName);
 
         if (nationalId.equals("NOT_FOUND")) {
             logger.infof("National ID not found for number %s. Skipping spin grant.", msisdn);
@@ -85,17 +85,5 @@ public class ConsumerHandler {
             smsService.send("4477", msisdn, "Shine jiliin beleg avah erhtei bolloo.", true); // TODO change
         else
             smsService.send("4477", msisdn, "Toki Mobile-d negdej beleg neeh erhtei bolloo. {LINK}", true); // TODO Change
-    }
-
-    public String getNationalIdByPhoneNo(String phoneNo, String accountName) {
-        String rd;
-        try {
-            JsonNode rdInfo = Utils.toJsonNode(APIUtil.getRegIDByPhoneNo(phoneNo, accountName, debugMode));
-            rd = rdInfo.path("rd").asText();
-        } catch (Exception e) {
-            return "NOT_FOUND";
-        }
-
-        return rd;
     }
 }
