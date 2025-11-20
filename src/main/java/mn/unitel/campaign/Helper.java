@@ -39,6 +39,9 @@ public class Helper {
 
     private volatile Set<String> blacklistedNumbers = Collections.emptySet();
 
+    @ConfigProperty (name = "campaign.test.numbers", defaultValue = "")
+    List<String> testNumbers;
+
     @PostConstruct
     void init() {
         loadBlacklist();
@@ -67,7 +70,7 @@ public class Helper {
     }
 
     public boolean isTokiNumber(String msisdn) {
-        return msisdn != null && msisdn.matches("^(50[0-4]|55[0-4]).*");
+        return msisdn != null && (msisdn.matches("^(50[0-4]|55[0-4]).*") || testNumbers.contains(msisdn));
     }
 
     public boolean isBlacklisted(String msisdn) {
