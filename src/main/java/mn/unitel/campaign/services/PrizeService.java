@@ -98,8 +98,15 @@ public class PrizeService {
             return;
         }
 
-        smsService.send("4477", msisdn, prizeRecord.getPrizeName() + " beleg avlaa. Central tower-n 8 davhraas belge irj avaarai.", true); // TODO Change
-        tokiService.sendPushNoti(tokiId, ""); // TODO change
+        dsl.update(SPIN_ELIGIBLE_NUMBERS)
+                .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, LocalDateTime.now())
+                .set(SPIN_ELIGIBLE_NUMBERS.PRIZE_ID, prizeId)
+                .set(SPIN_ELIGIBLE_NUMBERS.SUCCESS, true)
+                .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
+                .execute();
+
+        smsService.send("4477", msisdn, "Chamd " + prizeRecord.getPrizeName() + " beleglej baina. Central Tower-n 8 davhraas irj belgee avaarai.", true);
+        tokiService.sendPushNoti(tokiId, "55 БЭЛЭГТЭЙ ШИНЭ ЖИЛ", "Toki Mobile-д нэгдэж " + prizeRecord.getPrizeName() + "-н эзэн боллоо. Баяр хүргэе \uD83C\uDF89");
     }
 
     private void processCouponPrize(int prizeId, String nationalId, String msisdn, UUID spinId, String tokiId, String coupon) {
@@ -130,8 +137,16 @@ public class PrizeService {
             return;
         }
 
-        smsService.send("4477", msisdn, prizeRecord.getPrizeName() + " beleg avlaa. Coupon code: " + coupon, true); // TODO Change
-        tokiService.sendPushNoti(tokiId, ""); // TODO change
+        dsl.update(SPIN_ELIGIBLE_NUMBERS)
+                .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, LocalDateTime.now())
+                .set(SPIN_ELIGIBLE_NUMBERS.PRIZE_ID, prizeId)
+                .set(SPIN_ELIGIBLE_NUMBERS.SUCCESS, true)
+                .set(SPIN_ELIGIBLE_NUMBERS.COUPON, coupon)
+                .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
+                .execute();
+
+        smsService.send("4477", msisdn, "Chamd " + prizeRecord.getPrizeName() + " beleglej baina. 'Minii beleg' hesgees coupon code-oo haraarai. https://link.toki.mn/", true); // TODO deeplink
+        tokiService.sendPushNoti(tokiId, "55 БЭЛЭГТЭЙ ШИНЭ ЖИЛ", "Toki Mobile-д нэгдэж " + prizeRecord.getPrizeName() + "-н эзэн боллоо. Баяр хүргэе \uD83C\uDF89 'Миний бэлэг' хэсгээс купон кодоо хараарай.");
     }
 
     private void processDataPrize(int prizeId, String nationalId, String msisdn, UUID spinId, String tokiId) {
@@ -217,13 +232,12 @@ public class PrizeService {
                     .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
                     .execute();
 
-            smsService.send("4477", msisdn, "Shine jiliin uramshuulliin " +
-                            expireDateStr.substring(0, 4) + "/" +
+            smsService.send("4477", msisdn, expireDateStr.substring(0, 4) + "/" +
                             expireDateStr.substring(0, 6) + "/" +
-                            expireDateStr.substring(0, 8) + " hurtel ashiglah " + dataAmountText + " idevhejlee."
-                    , true); // TODO change
+                            expireDateStr.substring(0, 8) + " hurtel ashiglah shine jiliin uramshuulliin " + dataAmountText + " data idevhejlee."
+                    , true);
 
-            tokiService.sendPushNoti(tokiId, ""); // TODO change
+            tokiService.sendPushNoti(tokiId, "Toki Mobile", "Дугаарт " + dataAmountText + " дата идэвхэжлээ.");
         }
     }
 
@@ -240,12 +254,15 @@ public class PrizeService {
         }
 
         String offerName;
+        String dataAmountStr;
         switch (prizeId) {
             case 304 -> {
-                offerName = "Toki 3GB 7 хоног"; // TODO Change
+                dataAmountStr = "5.5GB";
+                offerName = "Toki 3GB 7 хоног"; // TODO offer name
             }
             case 305 -> {
-                offerName = "Toki 5.5GB 30 хоног"; // TODO Change
+                dataAmountStr = "55GB";
+                offerName = "Toki 5.5GB 30 хоног"; // TODO offer name
             }
             default -> {
                 logger.info("Invalid prize id: " + prizeId);
@@ -279,7 +296,7 @@ public class PrizeService {
 //                            expireDateStr.substring(0, 8) + " hurtel ashiglah " + dataAmountText + " idevhejlee."
 //                    , true); // TODO change
 
-            tokiService.sendPushNoti(tokiId, ""); // TODO change
+            tokiService.sendPushNoti(tokiId, "Toki Mobile", "Дугаарт " + dataAmountStr + " дата идэвхэжлээ");
         }
     }
 }

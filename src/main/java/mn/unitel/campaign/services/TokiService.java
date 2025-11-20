@@ -69,7 +69,7 @@ public class TokiService {
                 });
     }
 
-    public void sendPushNoti(String tokiId, String body) {
+    public void sendPushNoti(String tokiId, String title, String body) {
         logger.info("Sending toki noti to user: " + tokiId);
         String token = "Bearer " + tokiGeneralClient.getToken().getData().getAccessToken();
 
@@ -77,7 +77,7 @@ public class TokiService {
             tokiGeneralClient.send(
                     token,
                     TokiNotiReq.builder()
-                            .title("Toki Mobile") // TODO Change
+                            .title(title) // TODO Change
                             .body(body)
                             .url("https://link.toki.mn/VsQK") // TODO Change
                             .buttonName("OK") // TODO Change

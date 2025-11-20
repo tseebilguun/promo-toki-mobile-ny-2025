@@ -11,10 +11,7 @@ import mn.unitel.campaign.Helper;
 import mn.unitel.campaign.jooq.tables.records.PrizeListRecord;
 import mn.unitel.campaign.jooq.tables.records.SpecialPrizeRuleRecord;
 import mn.unitel.campaign.jooq.tables.records.SpinEligibleNumbersRecord;
-import mn.unitel.campaign.models.InvitationReq;
-import mn.unitel.campaign.models.RemainingSpinRes;
-import mn.unitel.campaign.models.SpinReq;
-import mn.unitel.campaign.models.SpinRes;
+import mn.unitel.campaign.models.*;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 import org.jooq.DSLContext;
@@ -77,8 +74,12 @@ public class SpinnerService {
                     .orderBy(SPIN_ELIGIBLE_NUMBERS.RECHARGE_DATE.desc())
                     .fetch();
 
-            List<Integer> claimedPrizeIds = claimedPrizes.stream()
-                    .map(SpinEligibleNumbersRecord::getPrizeId)
+            List<ClaimedPrize> claimedPrizeList = claimedPrizes.stream()
+                    .map(r -> ClaimedPrize.builder()
+                            .prizeId(r.getPrizeId())
+                            .coupon(r.getCoupon())
+                            .build()
+                    )
                     .toList();
 
 
@@ -96,7 +97,7 @@ public class SpinnerService {
                                                 .phoneNo(phoneNo)
                                                 .tokiId(tokiId)
                                                 .nationalId(nationalId)
-                                                .claimedPrizes(claimedPrizeIds)
+                                                .claimedPrizes(claimedPrizeList)
                                                 .spinId(null)
                                                 .weekNumber(weekNumber)
                                                 .build()
@@ -119,7 +120,7 @@ public class SpinnerService {
                                             .phoneNo(phoneNo)
                                             .tokiId(tokiId)
                                             .nationalId(nationalId)
-                                            .claimedPrizes(claimedPrizeIds)
+                                            .claimedPrizes(claimedPrizeList)
                                             .spinId(firstRecord.getId())
                                             .weekNumber(weekNumber)
                                             .build()

@@ -19,7 +19,7 @@ public class RemainingSpinRes extends BaseJsonModel {
     String phoneNo;
     String tokiId;
     String nationalId;
-    List<Integer> claimedPrizes;
+    List<ClaimedPrize> claimedPrizes;
     UUID spinId;
     Integer weekNumber;
 }

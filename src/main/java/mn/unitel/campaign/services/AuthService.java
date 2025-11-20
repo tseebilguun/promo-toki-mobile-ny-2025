@@ -92,7 +92,7 @@ public class AuthService {
                                     "Login successful",
                                     jwtService.generateTokenWithPhone(
                                             tokiUserInfo.getData().getNationalId(),
-                                            tokiUserInfo.getData().getPhoneNo(),
+                                            loginRequest.getMsisdn(),
                                             accountName,
                                             tokiId,
                                             tokiUserInfo.getData().getNationalId()

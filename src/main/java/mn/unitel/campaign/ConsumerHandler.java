@@ -82,10 +82,10 @@ public class ConsumerHandler {
                 .execute();
 
         if (rechargeType.equalsIgnoreCase("Recharge"))
-            smsService.send("4477", msisdn, "Shine jiliin beleg avah erhtei bolloo.", true); // TODO change
+            smsService.send("4477", msisdn, "'55 Belegtei shine jil'-d oroltson beleg neeh erhtei bolloo. https://link.toki.mn/", true); // TODO deeplink
         else if (rechargeType.equalsIgnoreCase("New Number"))
-            smsService.send("4477", msisdn, "Toki Mobile-d negdej beleg neeh erhtei bolloo. {LINK}", true); // TODO Change
+            smsService.send("4477", msisdn, "Toki Mobile-d negdej '55 Belegtei shine jil'-d oroltson beleg neeh erhtei bolloo. https://link.toki.mn/", true); // TODO deeplink
         else if (rechargeType.equalsIgnoreCase("Invitation"))
-            smsService.send("4477", msisdn, "Toki Mobile-d negdej beleg neeh erhtei bolloo. {LINK}", true); // TODO Change
+            smsService.send("4477", msisdn, "", true); // TODO deeplink
     }
 }
