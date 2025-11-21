@@ -47,6 +47,12 @@ public class SpinnerService {
     @Inject
     PrizeService prizeService;
 
+    @ConfigProperty(name = "test.now")
+    LocalDateTime testNow;
+
+    @ConfigProperty(name = "campaign.debug.mode", defaultValue = "false")
+    boolean debugMode;
+
     private static final Map<Integer, int[][]> WEEK_RANGES = Map.of(
             1, new int[][]{
                     {30, 301},
@@ -87,7 +93,7 @@ public class SpinnerService {
             String accountName = (String) ctx.getProperty("jwt.accountName");
             String nationalId = (String) ctx.getProperty("jwt.nationalId");
 
-            logger.info("JWS parsed info - Phone: " + phoneNo + ", TokiId: " + tokiId + ", AccountName: " + accountName + ", NationalId: " + nationalId);
+            logger.info("JWT parsed info - Phone: " + phoneNo + ", TokiId: " + tokiId + ", AccountName: " + accountName + ", NationalId: " + nationalId);
 
             if (phoneNo == null || tokiId == null || nationalId == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
@@ -120,7 +126,8 @@ public class SpinnerService {
                     .toList();
 
 
-            LocalDateTime now = LocalDateTime.now();
+//             TODO Test change
+            LocalDateTime now = debugMode ? testNow : LocalDateTime.now();
             Integer weekNumber = helper.getCurrentWeekNumber(now);
 
             if (records.isEmpty()) {
@@ -221,6 +228,7 @@ public class SpinnerService {
                 logger.info("Spin eligible ID from record: " + spinRecord.getId());
 
                 if (!spinReq.getSpinId().equals(spinRecord.getId())) {
+                    logger.warn("Spin request has been rejected for " + nationalId + ". Reason: Spin ID mismatch. Request ID: " + spinReq.getSpinId() + ", Record ID: " + spinRecord.getId());
                     logger.warn("Exception will be thrown!");
                     throw new WebApplicationException(
                             Response.status(Response.Status.BAD_REQUEST)
@@ -287,7 +295,7 @@ public class SpinnerService {
 
                 int updatedSpecialPrizeRecord = dslTx.update(SPECIAL_PRIZE_RULE)
                         .set(SPECIAL_PRIZE_RULE.CLAIMED, true)
-                        .set(SPECIAL_PRIZE_RULE.CLAIMED_DATE, LocalDateTime.now())
+                        .set(SPECIAL_PRIZE_RULE.CLAIMED_DATE, debugMode ? testNow : LocalDateTime.now())
                         .set(SPECIAL_PRIZE_RULE.CLAIMED_USER_NATIONAL_ID, nationalId)
                         .where(SPECIAL_PRIZE_RULE.ID.eq(specialPrizeRuleRecord.getId()))
                         .execute();
@@ -324,6 +332,7 @@ public class SpinnerService {
                                         .prizeName(specialPrizeInfoRecord.getPrizeName())
                                         .isSpecial(specialPrizeInfoRecord.getSpecial())
                                         .coupon(coupon.get())
+                                        .build()
                         ))
                         .build();
             }
@@ -339,6 +348,7 @@ public class SpinnerService {
                                         .prizeName(specialPrizeInfoRecord.getPrizeName())
                                         .isSpecial(specialPrizeInfoRecord.getSpecial())
                                         .coupon(null)
+                                        .build()
                         ))
                         .build();
             }
@@ -388,6 +398,7 @@ public class SpinnerService {
                                             .prizeName(regularGiftRecord.getPrizeName())
                                             .isSpecial(regularGiftRecord.getSpecial())
                                             .coupon(null)
+                                            .build()
                             )
                     )
                     .build();

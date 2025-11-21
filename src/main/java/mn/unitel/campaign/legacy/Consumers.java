@@ -10,6 +10,7 @@ import mn.unitel.campaign.helpers.RechargeNoti;
 import mn.unitel.campaign.helpers.SmsNoti;
 import mn.unitel.campaign.helpers.StatusNoti;
 import mn.unitel.campaign.rabbitmq.util.RabbitMQSmsMessage;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import java.time.LocalDateTime;
@@ -27,6 +28,9 @@ public class Consumers {
     @Inject
     ConsumerHandler consumerHandler;
 
+    @ConfigProperty(name = "test.now")
+    LocalDateTime testNow;
+
     private static final Logger logger = Logger.getLogger(Consumers.class.getName());
 
     public void onStatusChange(byte[] bytes) {
@@ -41,7 +45,6 @@ public class Consumers {
 
             if (!campaignConfig.shouldProcess(msisdn))
                 return;
-
 
 
             if (!campaignConfig.isWithinCampaignPeriod(LocalDateTime.now()))

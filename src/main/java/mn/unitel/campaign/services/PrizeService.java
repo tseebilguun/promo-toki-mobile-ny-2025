@@ -42,6 +42,9 @@ public class PrizeService {
     @Inject
     TokiService tokiService;
 
+    @ConfigProperty (name = "test.now")
+    LocalDateTime testNow;
+
     public void processPrizeAsync(int prizeId, String msisdn, String nationalId, String tokiId, UUID spinId, String coupon) {
         prizeExecutor.execute(() -> {
             logger.info("Executing Prize Async Request at " + Thread.currentThread().getName());
@@ -99,7 +102,7 @@ public class PrizeService {
         }
 
         dsl.update(SPIN_ELIGIBLE_NUMBERS)
-                .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, LocalDateTime.now())
+                .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, debugMode ? testNow : LocalDateTime.now())
                 .set(SPIN_ELIGIBLE_NUMBERS.PRIZE_ID, prizeId)
                 .set(SPIN_ELIGIBLE_NUMBERS.SUCCESS, true)
                 .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
@@ -138,7 +141,7 @@ public class PrizeService {
         }
 
         dsl.update(SPIN_ELIGIBLE_NUMBERS)
-                .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, LocalDateTime.now())
+                .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, debugMode ? testNow : LocalDateTime.now())
                 .set(SPIN_ELIGIBLE_NUMBERS.PRIZE_ID, prizeId)
                 .set(SPIN_ELIGIBLE_NUMBERS.SUCCESS, true)
                 .set(SPIN_ELIGIBLE_NUMBERS.COUPON, coupon)
@@ -211,7 +214,7 @@ public class PrizeService {
         if (addProductRes == null || !addProductRes.path("result").asText().equals("success")) {
             logger.info("Failed to add product for data prize. Prize ID: " + prizeId + ", MSISDN: " + msisdn + ", National ID: " + nationalId + ", Spin Eligible ID: " + spinId);
             dsl.update(SPIN_ELIGIBLE_NUMBERS)
-                    .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, LocalDateTime.now())
+                    .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, debugMode ? testNow : LocalDateTime.now())
                     .set(SPIN_ELIGIBLE_NUMBERS.PRIZE_ID, prizeId)
                     .set(SPIN_ELIGIBLE_NUMBERS.SUCCESS, false)
                     .set(SPIN_ELIGIBLE_NUMBERS.RESPONSE, addProductRes.toString())
@@ -222,7 +225,7 @@ public class PrizeService {
                     .execute();
         } else {
             dsl.update(SPIN_ELIGIBLE_NUMBERS)
-                    .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, LocalDateTime.now())
+                    .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, debugMode ? testNow : LocalDateTime.now())
                     .set(SPIN_ELIGIBLE_NUMBERS.PRIZE_ID, prizeId)
                     .set(SPIN_ELIGIBLE_NUMBERS.SUCCESS, true)
                     .set(SPIN_ELIGIBLE_NUMBERS.RESPONSE, addProductRes.toString())
@@ -275,7 +278,7 @@ public class PrizeService {
         if (addProductRes == null || !addProductRes.path("result").asText().equals("success")) {
             logger.info("Failed to add product for data prize. Prize ID: " + prizeId + ", MSISDN: " + msisdn + ", National ID: " + nationalId + ", Spin Eligible ID: " + spinId);
             dsl.update(SPIN_ELIGIBLE_NUMBERS)
-                    .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, LocalDateTime.now())
+                    .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, debugMode ? testNow : LocalDateTime.now())
                     .set(SPIN_ELIGIBLE_NUMBERS.PRIZE_ID, prizeId)
                     .set(SPIN_ELIGIBLE_NUMBERS.SUCCESS, false)
                     .set(SPIN_ELIGIBLE_NUMBERS.RESPONSE, addProductRes.toString())
@@ -283,7 +286,7 @@ public class PrizeService {
                     .execute();
         } else {
             dsl.update(SPIN_ELIGIBLE_NUMBERS)
-                    .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, LocalDateTime.now())
+                    .set(SPIN_ELIGIBLE_NUMBERS.SPIN_DATE, debugMode ? testNow : LocalDateTime.now())
                     .set(SPIN_ELIGIBLE_NUMBERS.PRIZE_ID, prizeId)
                     .set(SPIN_ELIGIBLE_NUMBERS.SUCCESS, true)
                     .set(SPIN_ELIGIBLE_NUMBERS.RESPONSE, addProductRes.toString())

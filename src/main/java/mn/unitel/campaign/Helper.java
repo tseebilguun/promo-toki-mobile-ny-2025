@@ -37,7 +37,7 @@ public class Helper {
     @ConfigProperty (name = "campaign.debug.mode", defaultValue = "false")
     boolean debugMode;
 
-    private volatile Set<String> blacklistedNumbers = Collections.emptySet();
+    private volatile Set<String> blackListedNationalIds = Collections.emptySet();
 
     @ConfigProperty (name = "campaign.test.numbers", defaultValue = "")
     List<String> testNumbers;
@@ -62,10 +62,10 @@ public class Helper {
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toUnmodifiableSet());
 
-            blacklistedNumbers = cleaned;
-            logger.infof("Loaded %d blacklisted numbers from %s", cleaned.size(), blacklistNumbersPath);
+            blackListedNationalIds = cleaned;
+            logger.infof("Loaded %d blacklisted national IDs from %s", cleaned.size(), blacklistNumbersPath);
         } catch (Exception e) {
-            logger.errorf(e, "Failed to load blacklist numbers from %s (continuing with empty blacklist)", blacklistNumbersPath);
+            logger.errorf(e, "Failed to load blacklist national IDs from %s (continuing with empty blacklist)", blacklistNumbersPath);
         }
     }
 
@@ -73,11 +73,11 @@ public class Helper {
         return msisdn != null && (msisdn.matches("^(50[0-4]|55[0-4]).*") || testNumbers.contains(msisdn));
     }
 
-    public boolean isBlacklisted(String msisdn) {
-        if (msisdn == null) {
+    public boolean isBlacklisted(String nationalId) {
+        if (nationalId == null) {
             return false;
         }
-        return blacklistedNumbers.contains(msisdn);
+        return blackListedNationalIds.contains(nationalId);
     }
 
     public Integer getCurrentWeekNumber(LocalDateTime now) {

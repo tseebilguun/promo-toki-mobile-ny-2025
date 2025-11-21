@@ -6,6 +6,7 @@ import io.smallrye.context.api.NamedInstance;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import mn.unitel.campaign.ConsumerHandler;
 import mn.unitel.campaign.CustomResponse;
@@ -38,11 +39,13 @@ public class InvitationService {
     ConsumerHandler consumerHandler;
 
 
-    public Response sendInvite(InvitationReq req, ContainerRequestContext ctx) {
-        String nationalId = (String) ctx.getProperty("nationalId");
-        String tokiId = (String) ctx.getProperty("tokiId");
-        String phoneNo = (String) ctx.getProperty("phoneNo");
-        String accountName = (String) ctx.getProperty("accountName");
+    public Response sendInvite(InvitationReq req, @Context ContainerRequestContext ctx) {
+        String nationalId = (String) ctx.getProperty("jwt.nationalId");
+        String tokiId = (String) ctx.getProperty("jwt.tokiId");
+        String phoneNo = (String) ctx.getProperty("jwt.phone");
+        String accountName = (String) ctx.getProperty("jwt.accountName");
+
+        logger.info("Invitation request received from nationalId: " + nationalId + ", msisdn: " + phoneNo + " accountName: " + accountName + ", toki ID: " + tokiId + ", inviting msisdn: " + req.getInvitedMsisdn());
 
         if (req.getInvitedMsisdn() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -116,9 +119,6 @@ public class InvitationService {
                     )
                     .build();
         }
-
-
-
 
 
         try {
