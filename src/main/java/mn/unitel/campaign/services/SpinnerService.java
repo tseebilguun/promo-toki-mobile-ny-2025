@@ -192,6 +192,13 @@ public class SpinnerService {
                     .build();
         }
 
+        if (!spinReq.getNationalId().equalsIgnoreCase(nationalId)){
+            logger.info("National ID mismatch. Request: " + spinReq.getNationalId() + ", JWT Token: " + nationalId);
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new CustomResponse<>("fail", "Алдаа гарлаа. Дахин оролдоно уу.", null))
+                    .build();
+        }
+
         boolean isBlackListed = helper.isBlacklisted(nationalId);
 
         String formattedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
