@@ -36,7 +36,7 @@ public class Resources {
     }
 
     @GET
-    @Path("/spinnger/getInfo")
+    @Path("/spinner/getInfo")
     public Response getGeneralInfo(@Context ContainerRequestContext ctx) {
         return spinnerService.getGemeralInfo(ctx);
     }
