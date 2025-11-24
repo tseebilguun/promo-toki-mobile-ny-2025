@@ -121,6 +121,7 @@ public class SpinnerService {
                     .map(r -> ClaimedPrize.builder()
                             .prizeId(r.getPrizeId())
                             .coupon(r.getCoupon())
+                            .claimedPhoneNo(r.getPhoneNo())
                             .build()
                     )
                     .toList();
@@ -387,6 +388,9 @@ public class SpinnerService {
                 }
             }
 
+            // TODO Remove override option in production
+            if (spinReq.getPrizeId() != null)
+                regularPrizeId = spinReq.getPrizeId();
 
             prizeService.processPrizeAsync(regularPrizeId, rechargedMsisdn.get(), nationalId, tokiId, spinReq.getSpinId(), null);
             logger.info("Rolled regular prize id: " + regularPrizeId);

@@ -17,6 +17,7 @@ import org.jooq.DSLContext;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.UUID;
 
 import static mn.unitel.campaign.jooq.Tables.PRIZE_LIST;
@@ -42,7 +43,7 @@ public class PrizeService {
     @Inject
     TokiService tokiService;
 
-    @ConfigProperty (name = "test.now")
+    @ConfigProperty(name = "test.now")
     LocalDateTime testNow;
 
     public void processPrizeAsync(int prizeId, String msisdn, String nationalId, String tokiId, UUID spinId, String coupon) {
@@ -177,7 +178,7 @@ public class PrizeService {
                         .plusDays(1)
                         .withHour(23)
                         .withMinute(59)
-                        .withSecond(59);
+                        .withSecond(58);
                 dataAmountText = "3GB";
                 dataDuration = 2;
             }
@@ -187,7 +188,7 @@ public class PrizeService {
                         .plusDays(4)
                         .withHour(23)
                         .withMinute(59)
-                        .withSecond(59);
+                        .withSecond(58);
                 dataAmountText = "5.5GB";
                 dataDuration = 5;
             }
@@ -197,7 +198,7 @@ public class PrizeService {
                         .plusDays(9)
                         .withHour(23)
                         .withMinute(59)
-                        .withSecond(59);
+                        .withSecond(58);
                 dataAmountText = "55GB";
                 dataDuration = 10;
             }
@@ -209,7 +210,7 @@ public class PrizeService {
 
         expireDateStr = expireDate.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
 
-        JsonNode addProductRes = Utils.toJsonNode(APIUtil.addDeleteProduct(msisdn, "", dataAmount, "A25_063", expireDateStr, "Campaign", "add", debugMode));
+        JsonNode addProductRes = Utils.toJsonNode(APIUtil.addDeleteProduct(msisdn, "campaign_data", dataAmount, "A25_063", expireDateStr, "Campaign", "add", debugMode));
 
         if (addProductRes == null || !addProductRes.path("result").asText().equals("success")) {
             logger.info("Failed to add product for data prize. Prize ID: " + prizeId + ", MSISDN: " + msisdn + ", National ID: " + nationalId + ", Spin Eligible ID: " + spinId);
@@ -236,8 +237,8 @@ public class PrizeService {
                     .execute();
 
             smsService.send("4477", msisdn, expireDateStr.substring(0, 4) + "/" +
-                            expireDateStr.substring(0, 6) + "/" +
-                            expireDateStr.substring(0, 8) + " hurtel ashiglah shine jiliin uramshuulliin " + dataAmountText + " data idevhejlee."
+                            expireDateStr.substring(4, 6) + "/" +
+                            expireDateStr.substring(6, 8) + " hurtel ashiglah shine jiliin uramshuulliin " + dataAmountText + " data idevhejlee."
                     , true);
 
             tokiService.sendPushNoti(tokiId, "Toki Mobile", "Дугаарт " + dataAmountText + " дата идэвхэжлээ.");
@@ -256,16 +257,25 @@ public class PrizeService {
             return;
         }
 
-        String offerName;
         String dataAmountStr;
+        String dataAmount;
+        LocalDateTime expireDate = LocalDateTime.now()
+                .plusMonths(4)
+                .with(TemporalAdjusters.lastDayOfMonth())
+                .withHour(23)
+                .withMinute(59)
+                .withSecond(58);
+        String expireDateStr = expireDate.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+
+
         switch (prizeId) {
             case 304 -> {
-                dataAmountStr = "5.5GB";
-                offerName = "Toki 3GB 7 хоног"; // TODO offer name
+                dataAmountStr = "5GB";
+                dataAmount = "5368709120";
             }
             case 305 -> {
-                dataAmountStr = "55GB";
-                offerName = "Toki 5.5GB 30 хоног"; // TODO offer name
+                dataAmountStr = "11GB";
+                dataAmount = "11811160064";
             }
             default -> {
                 logger.info("Invalid prize id: " + prizeId);
@@ -273,7 +283,7 @@ public class PrizeService {
             }
         }
 
-        JsonNode addProductRes = Utils.toJsonNode(APIUtil.addDeleteProduct(msisdn, offerName, "", "A25_063", "", "Campaign", "add", debugMode));
+        JsonNode addProductRes = Utils.toJsonNode(APIUtil.addDeleteProduct(msisdn, "promo_data_recurring_custom_offer", dataAmount, "A25_063", expireDateStr, "Campaign", "add", debugMode));
 
         if (addProductRes == null || !addProductRes.path("result").asText().equals("success")) {
             logger.info("Failed to add product for data prize. Prize ID: " + prizeId + ", MSISDN: " + msisdn + ", National ID: " + nationalId + ", Spin Eligible ID: " + spinId);
@@ -293,11 +303,11 @@ public class PrizeService {
                     .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
                     .execute();
 
-//            smsService.send("4477", msisdn, "Shine jiliin uramshuulliin " +
-//                            expireDateStr.substring(0, 4) + "/" +
-//                            expireDateStr.substring(0, 6) + "/" +
-//                            expireDateStr.substring(0, 8) + " hurtel ashiglah " + dataAmountText + " idevhejlee."
-//                    , true); // TODO change
+            smsService.send("4477", msisdn, "Shine jiliin uramshuulliin " +
+                            expireDateStr.substring(0, 4) + "/" +
+                            expireDateStr.substring(4, 6) + "/" +
+                            expireDateStr.substring(6, 8) + " hurtel ashiglah " + dataAmountStr + " idevhejlee."
+                    , true);
 
             tokiService.sendPushNoti(tokiId, "Toki Mobile", "Дугаарт " + dataAmountStr + " дата идэвхэжлээ");
         }

@@ -8,4 +8,5 @@ import lombok.Data;
 public class ClaimedPrize {
     Integer prizeId;
     String coupon;
+    String claimedPhoneNo;
 }
