@@ -122,6 +122,7 @@ public class SpinnerService {
                             .prizeId(r.getPrizeId())
                             .coupon(r.getCoupon())
                             .claimedPhoneNo(r.getPhoneNo())
+                            .claimedDate(r.getSpinDate())
                             .build()
                     )
                     .toList();
