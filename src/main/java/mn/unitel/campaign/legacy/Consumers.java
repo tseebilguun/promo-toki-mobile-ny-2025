@@ -80,7 +80,7 @@ public class Consumers {
                 return;
 
 
-            if (rechargeNoti.getEntryLevelOffer().matches("34110|34111")) { //TODO Change
+            if (rechargeNoti.getEntryLevelOffer().matches("34110|34111|34109")) { 
                 consumerHandler.onRecharge(msisdn);
             }
 
