@@ -1,8 +1,5 @@
 package mn.unitel.campaign.services;
 
-import DTO.DTO_response.FetchServiceDetailsResponse;
-import Executable.APIUtil;
-import io.smallrye.context.api.NamedInstance;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -12,10 +9,7 @@ import mn.unitel.campaign.ConsumerHandler;
 import mn.unitel.campaign.CustomResponse;
 import mn.unitel.campaign.Helper;
 import mn.unitel.campaign.jooq.tables.records.SpinEligibleNumbersRecord;
-import mn.unitel.campaign.legacy.SmsService;
 import mn.unitel.campaign.models.InvitationReq;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.logging.Logger;
 import org.jooq.DSLContext;
 
@@ -46,9 +40,9 @@ public class InvitationService {
         String phoneNo = (String) ctx.getProperty("jwt.phone");
         String accountName = (String) ctx.getProperty("jwt.accountName");
 
-        logger.info("Invitation request received from nationalId: " + nationalId + ", msisdn: " + phoneNo + " accountName: " + accountName + ", toki ID: " + tokiId + ", inviting msisdn: " + req.getInvitedMsisdn());
+        logger.info("Invitation request received from nationalId: " + nationalId + ", msisdn: " + phoneNo + " accountName: " + accountName + ", toki ID: " + tokiId + ", inviting msisdn: " + req.getMsisdn());
 
-        if (req.getInvitedMsisdn() == null) {
+        if (req.getMsisdn() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(
                             new CustomResponse<>(
@@ -60,7 +54,7 @@ public class InvitationService {
                     .build();
         }
 
-        if (!helper.isTokiNumber(req.getInvitedMsisdn())) {
+        if (!helper.isTokiNumber(req.getMsisdn())) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(
                             new CustomResponse<>(
@@ -73,7 +67,7 @@ public class InvitationService {
         }
 
         SpinEligibleNumbersRecord record = dsl.selectFrom(SPIN_ELIGIBLE_NUMBERS)
-                .where(SPIN_ELIGIBLE_NUMBERS.PHONE_NO.eq(req.getInvitedMsisdn()))
+                .where(SPIN_ELIGIBLE_NUMBERS.PHONE_NO.eq(req.getMsisdn()))
                 .and(SPIN_ELIGIBLE_NUMBERS.RECHARGE_TYPE.eq("New Number"))
                 .limit(1)
                 .fetchOne();
@@ -135,7 +129,7 @@ public class InvitationService {
                     )
                     .build();
         } catch (Exception e) {
-            logger.errorf(e, "Failed to process invitation for invited number %s by inviter %s", req.getInvitedMsisdn(), nationalId);
+            logger.errorf(e, "Failed to process invitation for invited number %s by inviter %s", req.getMsisdn(), nationalId);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(
                             new CustomResponse<>(

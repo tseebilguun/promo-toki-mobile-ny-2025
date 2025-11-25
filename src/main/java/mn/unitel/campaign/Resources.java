@@ -53,7 +53,7 @@ public class Resources {
         return invitationService.sendInvite(req, ctx);
     }
 
-    @POST
+    @GET
     @Path("invite/getInvitedList")
     public Response getInvitedList(@Context ContainerRequestContext ctx) {
         return invitationService.getInvitedList(ctx);
