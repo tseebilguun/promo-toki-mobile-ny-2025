@@ -54,6 +54,12 @@ public class Resources {
     }
 
     @POST
+    @Path("invite/getInvitedList")
+    public Response getInvitedList(@Context ContainerRequestContext ctx) {
+        return invitationService.getInvitedList(ctx);
+    }
+
+    @POST
     @Path("test/active")
     public Response testActive(@QueryParam("msisdn") String msisdn) {
         consumerHandler.gotActive(msisdn);

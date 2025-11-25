@@ -19,6 +19,7 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.logging.Logger;
 import org.jooq.DSLContext;
 
+import java.util.List;
 import java.util.UUID;
 
 import static mn.unitel.campaign.jooq.Tables.SPIN_ELIGIBLE_NUMBERS;
@@ -145,5 +146,36 @@ public class InvitationService {
                     )
                     .build();
         }
+    }
+
+    public Response getInvitedList(@Context ContainerRequestContext ctx) {
+        String nationalId = (String) ctx.getProperty("jwt.nationalId");
+        String tokiId = (String) ctx.getProperty("jwt.tokiId");
+        String phoneNo = (String) ctx.getProperty("jwt.phone");
+        String accountName = (String) ctx.getProperty("jwt.accountName");
+
+        logger.info("Invitation request received from nationalId: " + nationalId + ", msisdn: " + phoneNo + " accountName: " + accountName + ", toki ID: " + tokiId);
+
+        if (nationalId == null || nationalId.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(
+                            new CustomResponse<>(
+                                    "fail",
+                                    "Алдаа гарлаа. Дахин оролдоно уу.",
+                                    null
+                            )
+                    )
+                    .build();
+        }
+        List<String> phoneNumbers = dsl
+                .select(SPIN_ELIGIBLE_NUMBERS.PHONE_NO)
+                .from(SPIN_ELIGIBLE_NUMBERS)
+                .where(SPIN_ELIGIBLE_NUMBERS.INVITED_BY.eq(nationalId))
+                .fetch(SPIN_ELIGIBLE_NUMBERS.PHONE_NO);
+
+        return Response.ok()
+                .entity(
+                        new CustomResponse<>("success", "", phoneNumbers)
+                ).build();
     }
 }
