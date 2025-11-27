@@ -79,7 +79,7 @@ public class TokiService {
                     TokiNotiReq.builder()
                             .title(title)
                             .body(body)
-                            .url("https://link.toki.mn/VsQK") // TODO deeplink
+                            .url("https://link.toki.mn/CX5z") // TODO deeplink
                             .buttonName("OK") // TODO Change
                             .accountId(tokiId)
                             .icon("test")

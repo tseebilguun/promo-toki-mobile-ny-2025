@@ -2,7 +2,6 @@ package mn.unitel.campaign;
 
 import DTO.DTO_response.FetchServiceDetailsResponse;
 import Executable.APIUtil;
-import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import mn.unitel.campaign.legacy.SmsService;
@@ -82,11 +81,15 @@ public class ConsumerHandler {
                 .set(SPIN_ELIGIBLE_NUMBERS.RECHARGE_DATE, LocalDateTime.now())
                 .execute();
 
-        if (rechargeType.equalsIgnoreCase("Recharge"))
-            smsService.send("4477", msisdn, "'55 Belegtei shine jil'-d oroltson beleg neeh erhtei bolloo. https://link.toki.mn/", true); // TODO deeplink
-        else if (rechargeType.equalsIgnoreCase("New Number"))
-            smsService.send("4477", msisdn, "Toki Mobile-d negdej '55 Belegtei shine jil'-d oroltson beleg neeh erhtei bolloo. https://link.toki.mn/", true); // TODO deeplink
+        if (rechargeType.equalsIgnoreCase("New Number"))
+            smsService.send("4477", msisdn, "Toki Mobile-d negdej '55 Belegtei shine jil'-d oroltson " +
+                    "beleg neeh erhtei bolloo. Mobile tsesiin uramshuulliin " +
+                    "banner deer darj orno uu: https://link.toki.mn/CX5z", true);
+        else if (rechargeType.equalsIgnoreCase("Recharge"))
+            smsService.send("4477", msisdn, "'55 Belegtei shine jil'-d oroltson beleg neeh erhtei bolloo. " +
+                    "Mobile tsesiin uramshuulliin banner deer darj orno uu: " +
+                    "https://link.toki.mn/CX5z", true);
         else if (rechargeType.equalsIgnoreCase("Invitation"))
-            logger.info(""); // TODO neg log bichih
+            logger.info("Granted spin by inviting friend: MSISDN: " + msisdn + ", National ID: " + nationalId);
     }
 }

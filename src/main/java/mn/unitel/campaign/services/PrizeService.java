@@ -109,8 +109,10 @@ public class PrizeService {
                 .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
                 .execute();
 
-        smsService.send("4477", msisdn, "Chamd " + prizeRecord.getPrizeName() + " beleglej baina. Central Tower-n 8 davhraas irj belgee avaarai.", true);
-        tokiService.sendPushNoti(tokiId, "55 БЭЛЭГТЭЙ ШИНЭ ЖИЛ", "Toki Mobile-д нэгдэж " + prizeRecord.getPrizeName() + "-н эзэн боллоо. Баяр хүргэе \uD83C\uDF89");
+        smsService.send("4477", msisdn, "Чамд " + prizeRecord.getPrizeName() + " бэлэглэж байна. Өөрийн " +
+                "бичиг баримттайгаа Central tower-н 8 давхараас ирж " +
+                "бэлгээ аваарай. Бэлэг харах: https://link.toki.mn/CX5z", true);
+        tokiService.sendPushNoti(tokiId, "55 БЭЛЭГТЭЙ ШИНЭ ЖИЛ", prizeRecord.getPrizeName() + "-н эзэн боллоо. Баяр хүргэе \uD83C\uDF89");
     }
 
     private void processCouponPrize(int prizeId, String nationalId, String msisdn, UUID spinId, String tokiId, String coupon) {
@@ -149,8 +151,67 @@ public class PrizeService {
                 .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
                 .execute();
 
-        smsService.send("4477", msisdn, "Chamd " + prizeRecord.getPrizeName() + " beleglej baina. 'Minii beleg' hesgees coupon code-oo haraarai. https://link.toki.mn/", true); // TODO deeplink
-        tokiService.sendPushNoti(tokiId, "55 БЭЛЭГТЭЙ ШИНЭ ЖИЛ", "Toki Mobile-д нэгдэж " + prizeRecord.getPrizeName() + "-н эзэн боллоо. Баяр хүргэе \uD83C\uDF89 'Миний бэлэг' хэсгээс купон кодоо хараарай.");
+        String smsContent = "";
+        switch (prizeId) {
+            case 201, 202 -> smsContent = "Чамд Steam account цэнэглэх эрхийн бичиг бэлэглэж байна. " +
+                    "“https://store.steampowered.com/account/redeemwalletcode” линкээр өөрийн хаягаар орж, купон кодоо ашиглан " +
+                    "идэвхжүүлээрэй. Миний бэлэг хэсгээс купон кодоо авна уу. Бэлэг харах: https://link.toki.mn/CX5z";
+            case 203, 204 -> smsContent = "ЧЧамд PubG Mobile тоглоомын UC цэнэглэх эрхийн бичиг бэлэглэж байна. " +
+                    "“https://www.midasbuy.com/midasbuy/mn/redeem/pubgm” линкээр орж, купон кодоо ашиглан идэвхжүүлээрэй. " +
+                    "Миний бэлэг хэсгээс купон кодоо авна уу. Бэлэг харах: https://link.toki.mn/CX5z";
+            case 205 -> smsContent = "Чамд Roblox тоглоомын Robux цэнэглэх эрхийн бичиг " +
+                    "бэлэглэж байна. “https://www.roblox.com/redeem” " +
+                    "линкээр орж, купон кодоо ашиглан идэвхжүүлээрэй. " +
+                    "Миний бэлэг хэсгээс купон кодоо авна уу. Бэлэг харах: " +
+                    "https://link.toki.mn/CX5z";
+            case 206 -> smsContent = "Чамд Mobile Legends: Bang Bang тоглоомын 56 diamond бэлэглэж байна. " +
+                    "mdirect.me/mobilelegends линкээр орон купон кодоо оруулан авна уу";
+            case 207 -> smsContent = "Чамд Mobile Legends: Bang Bang тоглоомын 278 diamond бэлэглэж байна. " +
+                    "mdirect.me/mobilelegends линкээр орон купон кодоо оруулан авна уу";
+            case 208 -> smsContent = "Чамд Vans эрхийн бичиг бэлэглэж байна. " +
+                    "“https://shoppy.mn/” линкээр орж, худалдан авалт хийх " +
+                    "үедээ купон кодоо оруулж ашиглаарай. Миний бэлэг " +
+                    "хэсгээс купон кодоо авна уу. Бэлэг харах: " +
+                    "https://link.toki.mn/CX5z";
+            case 209 -> smsContent = "Чамд Converse эрхийн бичиг бэлэглэж байна. " +
+                    "“https://shoppy.mn/” линкээр орж, худалдан авалт хийх " +
+                    "үедээ купон кодоо оруулж ашиглаарай. Миний бэлэг " +
+                    "хэсгээс купон кодоо авна уу. Бэлэг харах: " +
+                    "https://link.toki.mn/CX5z";
+            case 210 -> smsContent = "Чамд Adidas эрхийн бичиг бэлэглэж байна.  " +
+                    "“https://btf.mn/mn” линкээр орж, худалдан авалт хийх  " +
+                    "үедээ купон кодоо оруулж ашиглаарай. Миний бэлэг  " +
+                    "хэсгээс купон кодоо авна уу. Бэлэг харах:  " +
+                    "https://link.toki.mn/CX5z";
+            case 211 -> smsContent = "Чамд Adidas эрхийн бичиг бэлэглэж байна.  " +
+                    "“https://ayanchin.mn/” линкээр орж, худалдан авалт  " +
+                    "хийх үедээ купон кодоо оруулж ашиглаарай. Миний  " +
+                    "бэлэг хэсгээс купон кодоо авна уу. Бэлэг харах:  " +
+                    "https://link.toki.mn/CX5z";
+            case 212 -> smsContent = "Чамд Nike 50'000₮ эрхийн бичиг бэлэглэж байна. Өөрийн  " +
+                    "бичиг баримттайгаа Central tower-н 8 давхраас ирж  " +
+                    "бэлгээ аваарай. Бэлэг харах: https://link.toki.mn/CX5z";
+            case 213, 214 -> smsContent = "Чамд Cloudnine эрхийн бичиг бэлэглэж байна. " +
+                    "“https://cloudnine.mn/who-we-are/” линкээр орж, " +
+                    "худалдан авалт хийх үедээ купон кодоо оруулж " +
+                    "ашиглаарай. Миний бэлэг хэсгээс купон кодоо авна уу. " +
+                    "Бэлэг харах: https://link.toki.mn/CX5z";
+            case 215, 216 -> smsContent = "Чамд R.O.C кофе шопийн эрхийн бичиг бэлэглэж " +
+                    "байна. Салбараас худалдан авалт хийхдээ купон кодоо " +
+                    "ашиглаарай. Миний бэлэг хэсгээс купон кодоо авна уу. " +
+                    "Бэлэг харах: https://link.toki.mn/CX5z";
+            case 217 -> smsContent = "Чамд Cup chicken-н эрхийн бичиг бэлэглэж байна. " +
+                    "Салбараас худалдан авалт хийхдээ купон кодоо " +
+                    "ашиглаарай. Миний бэлэг хэсгээс купон кодоо авна уу. " +
+                    "Бэлэг харах: https://link.toki.mn/CX5z";
+        }
+
+        smsService.send("4477", msisdn, smsContent, true);
+        if (prizeId == 212)
+            tokiService.sendPushNoti(tokiId, "55 БЭЛЭГТЭЙ ШИНЭ ЖИЛ", prizeRecord.getPrizeName() + "-н эзэн боллоо. Баяр хүргэе \uD83C\uDF89 Өөрийн бичиг баримттайгаа Central tower-н 8 давхраас ирж бэлгээ аваарай.");
+        else
+            tokiService.sendPushNoti(tokiId, "55 БЭЛЭГТЭЙ ШИНЭ ЖИЛ", prizeRecord.getPrizeName() + "-н эзэн боллоо. Баяр хүргэе \uD83C\uDF89");
+
     }
 
     private void processDataPrize(int prizeId, String nationalId, String msisdn, UUID spinId, String tokiId) {
@@ -238,7 +299,8 @@ public class PrizeService {
 
             smsService.send("4477", msisdn, expireDateStr.substring(0, 4) + "/" +
                             expireDateStr.substring(4, 6) + "/" +
-                            expireDateStr.substring(6, 8) + " hurtel ashiglah shine jiliin uramshuulliin " + dataAmountText + " data idevhejlee."
+                            expireDateStr.substring(6, 8) + " hurtel ashiglah shine jiliin uramshuulliin " + dataAmountText + " data idevhejlee. Data uldegdel harah: " +
+                            "https://link.toki.mn/CX5z"
                     , true);
 
             tokiService.sendPushNoti(tokiId, "Toki Mobile", "Дугаарт " + dataAmountText + " дата идэвхэжлээ.");
@@ -303,10 +365,10 @@ public class PrizeService {
                     .where(SPIN_ELIGIBLE_NUMBERS.ID.eq(spinId))
                     .execute();
 
-            smsService.send("4477", msisdn, "Shine jiliin uramshuulliin " +
-                            expireDateStr.substring(0, 4) + "/" +
-                            expireDateStr.substring(4, 6) + "/" +
-                            expireDateStr.substring(6, 8) + " hurtel ashiglah " + dataAmountStr + " idevhejlee."
+            smsService.send("4477", msisdn, "Chamd 5 sariin tursh ashiglah " + dataAmountStr + " data beleglej " +
+                            "baina. Ehnii sariin {5 or 11}GB data idevhejlee. Uldsen 4 " +
+                            "sariin data sar buriin 1-nd idevhejne. Data uldegdel " +
+                            "harah: https://link.toki.mn/CX5z"
                     , true);
 
             tokiService.sendPushNoti(tokiId, "Toki Mobile", "Дугаарт " + dataAmountStr + " дата идэвхэжлээ");
