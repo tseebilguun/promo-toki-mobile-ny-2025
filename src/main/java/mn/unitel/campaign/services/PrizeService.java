@@ -156,7 +156,7 @@ public class PrizeService {
             case 201, 202 -> smsContent = "Чамд Steam account цэнэглэх эрхийн бичиг бэлэглэж байна. " +
                     "“https://store.steampowered.com/account/redeemwalletcode” линкээр өөрийн хаягаар орж, купон кодоо ашиглан " +
                     "идэвхжүүлээрэй. Миний бэлэг хэсгээс купон кодоо авна уу. Бэлэг харах: https://link.toki.mn/CX5z";
-            case 203, 204 -> smsContent = "ЧЧамд PubG Mobile тоглоомын UC цэнэглэх эрхийн бичиг бэлэглэж байна. " +
+            case 203, 204 -> smsContent = "Чамд PubG Mobile тоглоомын UC цэнэглэх эрхийн бичиг бэлэглэж байна. " +
                     "“https://www.midasbuy.com/midasbuy/mn/redeem/pubgm” линкээр орж, купон кодоо ашиглан идэвхжүүлээрэй. " +
                     "Миний бэлэг хэсгээс купон кодоо авна уу. Бэлэг харах: https://link.toki.mn/CX5z";
             case 205 -> smsContent = "Чамд Roblox тоглоомын Robux цэнэглэх эрхийн бичиг " +
@@ -183,7 +183,7 @@ public class PrizeService {
                     "үедээ купон кодоо оруулж ашиглаарай. Миний бэлэг  " +
                     "хэсгээс купон кодоо авна уу. Бэлэг харах:  " +
                     "https://link.toki.mn/CX5z";
-            case 211 -> smsContent = "Чамд Adidas эрхийн бичиг бэлэглэж байна.  " +
+            case 211 -> smsContent = "Чамд UGG эрхийн бичиг бэлэглэж байна.  " +
                     "“https://ayanchin.mn/” линкээр орж, худалдан авалт  " +
                     "хийх үедээ купон кодоо оруулж ашиглаарай. Миний  " +
                     "бэлэг хэсгээс купон кодоо авна уу. Бэлэг харах:  " +
@@ -366,7 +366,7 @@ public class PrizeService {
                     .execute();
 
             smsService.send("4477", msisdn, "Chamd 5 sariin tursh ashiglah " + dataAmountStr + " data beleglej " +
-                            "baina. Ehnii sariin {5 or 11}GB data idevhejlee. Uldsen 4 " +
+                            "baina. Ehnii sariin " + dataAmountStr + "GB data idevhejlee. Uldsen 4 " +
                             "sariin data sar buriin 1-nd idevhejne. Data uldegdel " +
                             "harah: https://link.toki.mn/CX5z"
                     , true);
