@@ -61,6 +61,7 @@ public class InvitationService {
         }
 
 
+
         if (req.getMsisdn() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(
