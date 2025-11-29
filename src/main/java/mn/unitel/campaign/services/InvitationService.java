@@ -144,7 +144,7 @@ public class InvitationService {
                     .entity(
                             new CustomResponse<>(
                                     "success",
-                                    "Найзаа урьж бэлэг авах 1 эрхтэй боллоо \uD83C\uDF89",
+                                    "Шинэ жилийн бэлэг авах 1 эрх нэмэгдлээ. \uD83C\uDF89",
                                     null
                             )
                     )
