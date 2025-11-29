@@ -13,5 +13,4 @@ public class SpinReq extends BaseJsonModel {
     String nationalId;
     UUID spinId;
     Integer weekNumber;
-    Integer prizeId; // TODO remove
 }

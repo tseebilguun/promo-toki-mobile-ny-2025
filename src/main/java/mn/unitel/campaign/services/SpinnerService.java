@@ -389,10 +389,6 @@ public class SpinnerService {
                 }
             }
 
-            // TODO Remove override option in production
-            if (spinReq.getPrizeId() != null)
-                regularPrizeId = spinReq.getPrizeId();
-
             prizeService.processPrizeAsync(regularPrizeId, rechargedMsisdn.get(), nationalId, tokiId, spinReq.getSpinId(), null);
             logger.info("Rolled regular prize id: " + regularPrizeId);
 

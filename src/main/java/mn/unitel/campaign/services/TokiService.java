@@ -3,6 +3,7 @@ package mn.unitel.campaign.services;
 import jakarta.enterprise.context.ApplicationScoped;
 import mn.unitel.campaign.clients.toki_general.TokiGeneralClient;
 import mn.unitel.campaign.clients.toki_general.TokiGeneralInfo;
+import mn.unitel.campaign.clients.toki_general.TokiNotiGetTokenRes;
 import mn.unitel.campaign.clients.toki_general.TokiNotiReq;
 import mn.unitel.campaign.clients.toki_user_info.*;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -74,16 +75,16 @@ public class TokiService {
         String token = "Bearer " + tokiGeneralClient.getToken().getData().getAccessToken();
 
         try {
-            tokiGeneralClient.send(
+            TokiNotiGetTokenRes send = tokiGeneralClient.send(
                     token,
                     TokiNotiReq.builder()
                             .title(title)
                             .body(body)
-                            .url("https://link.toki.mn/CX5z") // TODO deeplink
-                            .buttonName("OK") // TODO Change
+                            .url("https://link.toki.mn/CX5z")
+                            .buttonName("OK")
                             .accountId(tokiId)
                             .icon("test")
-                            .merchantId("66a71d8328f4dda2cd2b1d9d") // TODO Change
+                            .merchantId("66a71d8328f4dda2cd2b1d9d")
                             .build());
         } catch (Exception e) {
             logger.error("Failed to send push noti to Toki ID: " + tokiId + ", " + e.getMessage());

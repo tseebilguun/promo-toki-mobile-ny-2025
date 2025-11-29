@@ -42,6 +42,25 @@ public class InvitationService {
 
         logger.info("Invitation request received from nationalId: " + nationalId + ", msisdn: " + phoneNo + " accountName: " + accountName + ", toki ID: " + tokiId + ", inviting msisdn: " + req.getMsisdn());
 
+        Integer count = dsl
+                .selectCount()
+                .from(SPIN_ELIGIBLE_NUMBERS)
+                .where(SPIN_ELIGIBLE_NUMBERS.INVITED_BY.eq(nationalId))
+                .fetchOneInto(Integer.class);
+
+        int safeCount = count != null ? count : 0;
+
+        if (safeCount >= 10) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new CustomResponse<>(
+                            "fail",
+                            "10 найзаа урьсан байна. Дата цэнэглэлт хийж, эрхээ нэмэгдүүлэх боломжтой.",
+                            null
+                    ))
+                    .build();
+        }
+
+
         if (req.getMsisdn() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(
@@ -53,6 +72,7 @@ public class InvitationService {
                     )
                     .build();
         }
+
 
         if (!helper.isTokiNumber(req.getMsisdn())) {
             return Response.status(Response.Status.BAD_REQUEST)
