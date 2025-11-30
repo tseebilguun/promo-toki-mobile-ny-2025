@@ -25,6 +25,7 @@ public class Resources {
 
     @Inject
     InvitationService invitationService;
+
     @Inject
     ConsumerHandler consumerHandler;
 
