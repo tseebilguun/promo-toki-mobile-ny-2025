@@ -63,7 +63,7 @@ public class StartupService {
         smsProducer = new RabbitMQProducer(smsProducerConfig);
         smsProducer.startProduce();
 
-//        consumerFiles.forEach(this::startConsumer);
+        consumerFiles.forEach(this::startConsumer);
     }
 
     private void startConsumer(String jsonFile) {

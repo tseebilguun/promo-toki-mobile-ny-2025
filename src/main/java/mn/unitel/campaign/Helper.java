@@ -70,7 +70,7 @@ public class Helper {
     }
 
     public boolean isTokiNumber(String msisdn) {
-        return msisdn != null && (msisdn.matches("^551[2-9][0-9]{4}$") || testNumbers.contains(msisdn));
+        return msisdn != null && (msisdn.matches("^551[2-9][0-9]{4}$"));
     }
 
     public boolean isBlacklisted(String nationalId) {
