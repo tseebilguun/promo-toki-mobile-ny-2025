@@ -10,6 +10,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.Getter;
+import mn.unitel.campaign.Helper;
 import mn.unitel.campaign.Utils;
 import mn.unitel.campaign.database.DBPoolFactory;
 import mn.unitel.campaign.rabbitmq.RabbitMQConsumer;
@@ -45,6 +46,9 @@ public class StartupService {
 
     @Getter
     RabbitMQProducer smsProducer;
+
+    @Inject
+    Helper helper;
 
     private final List<RabbitMQConsumer> activeConsumers = new ArrayList<>();
 

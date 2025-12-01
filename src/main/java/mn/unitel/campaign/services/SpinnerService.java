@@ -47,9 +47,6 @@ public class SpinnerService {
     @Inject
     PrizeService prizeService;
 
-    @ConfigProperty(name = "test.now")
-    LocalDateTime testNow;
-
     @ConfigProperty(name = "campaign.debug.mode", defaultValue = "false")
     boolean debugMode;
 
@@ -128,8 +125,7 @@ public class SpinnerService {
                     .toList();
 
 
-//             TODO Test change
-            LocalDateTime now = debugMode ? testNow : LocalDateTime.now();
+            LocalDateTime now = LocalDateTime.now();
             Integer weekNumber = helper.getCurrentWeekNumber(now);
 
             if (records.isEmpty()) {
@@ -304,7 +300,7 @@ public class SpinnerService {
 
                 int updatedSpecialPrizeRecord = dslTx.update(SPECIAL_PRIZE_RULE)
                         .set(SPECIAL_PRIZE_RULE.CLAIMED, true)
-                        .set(SPECIAL_PRIZE_RULE.CLAIMED_DATE, debugMode ? testNow : LocalDateTime.now())
+                        .set(SPECIAL_PRIZE_RULE.CLAIMED_DATE, LocalDateTime.now())
                         .set(SPECIAL_PRIZE_RULE.CLAIMED_USER_NATIONAL_ID, nationalId)
                         .where(SPECIAL_PRIZE_RULE.ID.eq(specialPrizeRuleRecord.getId()))
                         .execute();

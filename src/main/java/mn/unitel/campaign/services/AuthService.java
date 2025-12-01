@@ -29,12 +29,12 @@ public class AuthService {
     Helper helper;
 
     public Response login(LoginReq loginRequest) {
-        if (loginRequest.getMsisdn() == null || loginRequest.getMsisdn().isEmpty())
+        if (loginRequest.getMsisdn() == null || loginRequest.getMsisdn().isEmpty() || loginRequest.getTokiId() == null || loginRequest.getTokiId().isEmpty())
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(
                             new CustomResponse<>(
                                     "fail",
-                                    "Утасны дугаар оруулна уу",
+                                    "Алдаа гарлаа",
                                     null
                             )
                     )
@@ -45,7 +45,7 @@ public class AuthService {
                     .entity(
                             new CustomResponse<>(
                                     "fail",
-                                    "Хэрэглэгчийн бүртгэлтэй дугаар Toki Mobile биш байна",
+                                    "Toki Mobile-н дугаар аваад 55 төрлийн бэлэг аваарай.",
                                     null
                             )
                     )
@@ -71,6 +71,19 @@ public class AuthService {
             }
 
             String tokiId = tokiService.getTokiId(nationalId);
+
+            if (!tokiId.equals(loginRequest.getTokiId())) {
+                logger.info("Toki ID mismatch: expected " + loginRequest.getTokiId() + ", got " + tokiId);
+                return Response.status(Response.Status.UNAUTHORIZED)
+                        .entity(
+                                new CustomResponse<>(
+                                        "fail",
+                                        "Алдаа гарлаа. Дахин оролдоно уу.",
+                                        null
+                                )
+                        )
+                        .build();
+            }
 
             if (tokiId.equals("NOT_FOUND")) {
                 return Response.status(Response.Status.UNAUTHORIZED)

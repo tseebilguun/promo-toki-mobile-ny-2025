@@ -28,9 +28,6 @@ public class Consumers {
     @Inject
     ConsumerHandler consumerHandler;
 
-    @ConfigProperty(name = "test.now")
-    LocalDateTime testNow;
-
     private static final Logger logger = Logger.getLogger(Consumers.class.getName());
 
     public void onStatusChange(byte[] bytes) {
